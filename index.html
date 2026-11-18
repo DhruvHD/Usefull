@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTools - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        html { scroll-behavior: smooth; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body {
+            background-color: #09090b;
+            background-image: linear-gradient(rgba(9, 9, 11, 0.72), rgba(9, 9, 11, 0.82)), url('https://img.magnific.com/premium-photo/minimalist-workspace-featuring-computer-chair-books-ideal-coding-study_570250-4567.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        .glass-card {
+            background: rgba(18, 18, 23, 0.76);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+    </style>
+</head>
+<body class="text-zinc-100 min-h-screen flex flex-col">
+    <!-- Header / Navigation Bar -->
+    <header class="w-full bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/80 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2.5 text-lg font-extrabold tracking-tight">
+                <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 via-amber-500 to-violet-600 flex items-center justify-center text-white shadow-lg shadow-rose-500/20">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </span>
+                <span class="bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">MyTools</span>
+            </a>
+
+            <nav class="flex items-center gap-3 sm:gap-5 text-xs sm:text-sm font-semibold text-zinc-400">
+                <a href="index.html" class="text-white font-bold text-white underline underline-offset-8 decoration-rose-500">Home</a>
+                <a href="image-converter.html" class="hidden md:inline hover:text-white transition">Image Converter</a>
+                <a href="pdf-to-excel.html" class="hidden md:inline hover:text-white transition">PDF to Excel</a>
+                <a href="bulk-rename.html" class="hidden lg:inline hover:text-white transition">Bulk Rename</a>
+                <a href="url-downloader.html" class="hidden lg:inline hover:text-white transition">URL to ZIP</a>
+                <a href="file-share.html" class="hidden sm:inline hover:text-white transition">File Share</a>
+                <a href="https://tyrescart-scrapping.klever.ae/tcsadmin/files" target="_blank" rel="noopener noreferrer" class="bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white px-4 py-2 rounded-xl transition font-bold shadow-lg shadow-rose-500/25 flex items-center gap-1.5">
+                    <span>Data scraping</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                </a>
+            </nav>
+        </div>
+    </header>
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-12 flex flex-col justify-center">
+        <div class="text-center max-w-2xl mx-auto mb-12">
+            <span class="inline-block px-3.5 py-1 rounded-full text-xs font-semibold bg-white/10 text-zinc-200 border border-white/15 backdrop-blur-md mb-4">
+                All-in-One Workspace Utilities
+            </span>
+            <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4">
+                Fast, Private & Bulk <span class="bg-gradient-to-r from-rose-400 via-amber-300 to-violet-400 bg-clip-text text-transparent">Productivity Tools</span>
+            </h1>
+            <p class="text-zinc-300 text-sm sm:text-base">
+                Select any tool below to open its dedicated workspace page.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <a href="image-converter.html" class="group glass-card p-7 rounded-2xl border border-rose-500/25 hover:border-rose-500/60 transition-all duration-300 hover:-translate-y-1 shadow-2xl relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-rose-500 via-pink-500 to-orange-400"></div>
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center mb-5 group-hover:scale-110 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-white group-hover:text-rose-400 transition mb-2">Bulk Image Converter</h2>
+                    <p class="text-xs text-zinc-400 leading-relaxed">Convert multiple PNG, JPG, WEBP, AVIF images instantly in your browser and download as a single ZIP.</p>
+                </div>
+                <div class="mt-6 flex items-center text-xs font-bold text-rose-400">
+                    <span>Open Tool</span>
+                    <span class="ml-1.5 group-hover:translate-x-1 transition">→</span>
+                </div>
+            </a>
+
+            <a href="pdf-to-excel.html" class="group glass-card p-7 rounded-2xl border border-emerald-500/25 hover:border-emerald-500/60 transition-all duration-300 hover:-translate-y-1 shadow-2xl relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-lime-400"></div>
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mb-5 group-hover:scale-110 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-white group-hover:text-emerald-400 transition mb-2">PDF to Excel Converter</h2>
+                    <p class="text-xs text-zinc-400 leading-relaxed">Extract tables and structured text from text-based PDFs directly into clean .XLSX spreadsheets.</p>
+                </div>
+                <div class="mt-6 flex items-center text-xs font-bold text-emerald-400">
+                    <span>Open Tool</span>
+                    <span class="ml-1.5 group-hover:translate-x-1 transition">→</span>
+                </div>
+            </a>
+
+            <a href="bulk-rename.html" class="group glass-card p-7 rounded-2xl border border-fuchsia-500/25 hover:border-fuchsia-500/60 transition-all duration-300 hover:-translate-y-1 shadow-2xl relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-fuchsia-500 via-purple-500 to-pink-500"></div>
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-fuchsia-500/15 text-fuchsia-400 flex items-center justify-center mb-5 group-hover:scale-110 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-white group-hover:text-fuchsia-400 transition mb-2">Bulk Image Rename (CSV)</h2>
+                    <p class="text-xs text-zinc-400 leading-relaxed">Upload images + rename.csv to batch rename files while preserving original extensions and download ZIP.</p>
+                </div>
+                <div class="mt-6 flex items-center text-xs font-bold text-fuchsia-400">
+                    <span>Open Tool</span>
+                    <span class="ml-1.5 group-hover:translate-x-1 transition">→</span>
+                </div>
+            </a>
+
+            <a href="url-downloader.html" class="group glass-card p-7 rounded-2xl border border-amber-500/25 hover:border-amber-500/60 transition-all duration-300 hover:-translate-y-1 shadow-2xl relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-amber-400 via-orange-500 to-yellow-500"></div>
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center mb-5 group-hover:scale-110 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-white group-hover:text-amber-400 transition mb-2">Bulk URL to ZIP Downloader</h2>
+                    <p class="text-xs text-zinc-400 leading-relaxed">Paste up to 1,000 image URLs or import CSV with Basic Auth support, live progress bar, and ZIP export.</p>
+                </div>
+                <div class="mt-6 flex items-center text-xs font-bold text-amber-400">
+                    <span>Open Tool</span>
+                    <span class="ml-1.5 group-hover:translate-x-1 transition">→</span>
+                </div>
+            </a>
+
+            <a href="file-share.html" class="group glass-card p-7 rounded-2xl border border-violet-500/25 hover:border-violet-500/60 transition-all duration-300 hover:-translate-y-1 shadow-2xl relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500"></div>
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-violet-500/15 text-violet-400 flex items-center justify-center mb-5 group-hover:scale-110 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-white group-hover:text-violet-400 transition mb-2">Quick File & ZIP Share (1GB)</h2>
+                    <p class="text-xs text-zinc-400 leading-relaxed">Upload ZIP or large files up to 1GB on one side and let anyone download directly from the live board.</p>
+                </div>
+                <div class="mt-6 flex items-center text-xs font-bold text-violet-400">
+                    <span>Open Tool</span>
+                    <span class="ml-1.5 group-hover:translate-x-1 transition">→</span>
+                </div>
+            </a>
+
+            <a href="https://tyrescart-scrapping.klever.ae/tcsadmin/files" target="_blank" rel="noopener noreferrer" class="group glass-card p-7 rounded-2xl border border-orange-500/25 hover:border-orange-500/60 transition-all duration-300 hover:-translate-y-1 shadow-2xl relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-orange-500 to-red-500"></div>
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-orange-500/15 text-orange-400 flex items-center justify-center mb-5 group-hover:scale-110 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-white group-hover:text-orange-400 transition mb-2">Data Scraping Admin</h2>
+                    <p class="text-xs text-zinc-400 leading-relaxed">Direct shortcut to TyresCart scraping files and admin dashboard in a new tab.</p>
+                </div>
+                <div class="mt-6 flex items-center text-xs font-bold text-orange-400">
+                    <span>Launch Portal</span>
+                    <span class="ml-1.5 group-hover:translate-x-1 transition">↗</span>
+                </div>
+            </a>
+        </div>
+    </main>
+</body>
+</html>
