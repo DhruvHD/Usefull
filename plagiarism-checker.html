@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plagiarism Checker - Klever</title>
+    <title>AI Content Detector - Klever</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Libraries for reading PDF, DOCX, and Images directly in browser -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         html { scroll-behavior: smooth; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -41,8 +45,9 @@
                 <a href="index.html" class="hover:text-white transition">Home</a>
                 <a href="image-converter.html" class="hidden md:inline hover:text-white transition">Image Converter</a>
                 <a href="image-to-text.html" class="hidden md:inline hover:text-white transition">Image to Text</a>
-                <a href="plagiarism-checker.html" class="hidden sm:inline font-bold text-teal-400">Plagiarism</a>
-                <a href="pdf-to-excel.html" class="hidden md:inline hover:text-white transition">PDF to Excel</a>
+                <a href="plagiarism-checker.html" class="hidden md:inline hover:text-white transition">Plagiarism</a>
+                <a href="ai-detector.html" class="hidden sm:inline font-bold text-indigo-400">AI Detector</a>
+                <a href="pdf-to-excel.html" class="hidden lg:inline hover:text-white transition">PDF to Excel</a>
                 <a href="bulk-rename.html" class="hidden lg:inline hover:text-white transition">Bulk Rename</a>
                 <a href="url-downloader.html" class="hidden lg:inline hover:text-white transition">URL to ZIP</a>
                 <a href="file-share.html" class="hidden sm:inline hover:text-white transition">File Share</a>
@@ -57,93 +62,122 @@
     </header>
 
     <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-10 flex items-center">
-        <div class="glass-card p-6 sm:p-8 rounded-2xl shadow-2xl w-full border border-teal-500/30 relative overflow-hidden">
-            <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-teal-400 via-emerald-500 to-cyan-500"></div>
+        <div class="glass-card p-6 sm:p-8 rounded-2xl shadow-2xl w-full border border-indigo-500/30 relative overflow-hidden">
+            <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-indigo-500 via-blue-500 to-purple-500"></div>
 
             <div class="flex items-center justify-between mb-4">
                 <a href="index.html" class="text-xs text-zinc-400 hover:text-white transition">← Back to Home</a>
-                <div class="flex items-center gap-2 bg-zinc-900/90 p-1 rounded-xl border border-zinc-800">
-                    <button type="button" id="modeWebBtn" class="px-3 py-1 rounded-lg text-xs font-semibold bg-teal-600 text-white transition">Web Check</button>
-                    <button type="button" id="modeCompareBtn" class="px-3 py-1 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white transition">Compare 2 Texts</button>
-                </div>
+                <span class="text-[11px] font-semibold text-indigo-400 bg-indigo-500/10 px-2.5 py-0.5 rounded-full">Supports PDF, DOCX, TXT, CSV, Images</span>
             </div>
 
             <div class="flex items-center justify-center gap-2 mb-1">
-                <span class="w-2.5 h-2.5 rounded-full bg-teal-400"></span>
-                <h1 class="text-2xl font-bold bg-gradient-to-r from-teal-300 to-emerald-300 bg-clip-text text-transparent">AI Plagiarism & Duplicate Checker</h1>
+                <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-indigo-300 via-blue-300 to-purple-300 bg-clip-text text-transparent">AI Content & File Detector</h1>
             </div>
-            <p class="text-zinc-400 text-xs text-center mb-6">Check sentence-level uniqueness, find matching sources, or compare two documents directly</p>
+            <p class="text-zinc-400 text-xs text-center mb-6">Upload any document (PDF, Word, TXT, CSV, Image) or paste text to detect ChatGPT / AI-written patterns</p>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <!-- Left Column: Text Input -->
+                <!-- Left Column: File Upload + Text Box -->
                 <div class="lg:col-span-7 flex flex-col gap-4">
-                    <div class="bg-zinc-950/75 rounded-xl border border-zinc-800 p-4 flex flex-col">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs font-semibold text-teal-400 uppercase tracking-wider">Main Text to Check</span>
-                            <div class="flex items-center gap-3 text-[11px] text-zinc-400">
-                                <span id="wordCountBadge">0 words</span>
-                                <button type="button" id="sampleTextBtn" class="text-teal-400 hover:underline">Try Sample</button>
-                                <button type="button" id="clearInputBtn" class="text-zinc-500 hover:text-rose-400">Clear</button>
+                    <!-- Drag & Drop Any File Zone -->
+                    <div id="fileDropZone" class="relative flex items-center justify-between px-4 py-3.5 border-2 border-dashed border-zinc-700 rounded-xl hover:border-indigo-500 hover:bg-indigo-500/5 transition cursor-pointer">
+                        <input id="anyFileInput" type="file" accept=".pdf,.doc,.docx,.txt,.csv,.md,.html,.json,.png,.jpg,.jpeg,.webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                        <div class="flex items-center gap-3 pointer-events-none">
+                            <div class="w-10 h-10 rounded-lg bg-indigo-500/15 text-indigo-400 flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs sm:text-sm font-semibold text-zinc-200" id="uploadedFileName">Click or Drop ANY File (PDF, DOCX, TXT, Image...)</p>
+                                <p class="text-[11px] text-zinc-500" id="fileExtractStatus">Automatically extracts text from uploaded files</p>
                             </div>
                         </div>
-                        <textarea id="mainTextInput" rows="9" placeholder="Paste your article, paragraph, or assignment text here (minimum 15 words recommended)..." class="w-full bg-transparent text-xs sm:text-sm text-zinc-200 placeholder-zinc-600 resize-none focus:outline-none leading-relaxed"></textarea>
+                        <span class="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg shrink-0 pointer-events-none">Browse File</span>
                     </div>
 
-                    <!-- Optional Reference Text Box (Visible in Compare Mode) -->
-                    <div id="compareBoxWrapper" class="hidden bg-zinc-950/75 rounded-xl border border-zinc-800 p-4 flex flex-col">
+                    <!-- Textarea -->
+                    <div class="bg-zinc-950/75 rounded-xl border border-zinc-800 p-4 flex flex-col">
                         <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider">Reference / Original Source Text</span>
-                            <span class="text-[11px] text-zinc-500">Compare against this text</span>
+                            <span class="text-xs font-semibold text-indigo-400 uppercase tracking-wider">Content to Analyze</span>
+                            <div class="flex items-center gap-3 text-[11px] text-zinc-400">
+                                <span id="wordCountLabel">0 words</span>
+                                <button type="button" id="sampleAiBtn" class="text-indigo-400 hover:underline">Sample AI</button>
+                                <button type="button" id="sampleHumanBtn" class="text-emerald-400 hover:underline">Sample Human</button>
+                                <button type="button" id="clearAllBtn" class="text-zinc-500 hover:text-rose-400">Clear</button>
+                            </div>
                         </div>
-                        <textarea id="referenceTextInput" rows="5" placeholder="Paste the original source text here to check similarity percentage..." class="w-full bg-transparent text-xs sm:text-sm text-zinc-200 placeholder-zinc-600 resize-none focus:outline-none leading-relaxed"></textarea>
+                        <textarea id="detectorInput" rows="10" placeholder="Upload a file above OR paste your text directly here..." class="w-full bg-transparent text-xs sm:text-sm text-zinc-200 placeholder-zinc-600 resize-none focus:outline-none leading-relaxed"></textarea>
                     </div>
 
-                    <!-- Progress Bar -->
-                    <div id="scanProgressWrapper" class="hidden">
+                    <!-- Extraction Progress Bar -->
+                    <div id="extractProgressWrapper" class="hidden">
                         <div class="flex justify-between text-xs text-zinc-300 mb-1">
-                            <span id="scanStatusText">Scanning sentences...</span>
-                            <span id="scanPercentText">0%</span>
+                            <span id="extractStatusText">Reading file...</span>
+                            <span id="extractPercentText">0%</span>
                         </div>
                         <div class="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
-                            <div id="scanProgressBar" class="bg-gradient-to-r from-teal-400 to-emerald-500 h-2 rounded-full transition-all duration-200" style="width: 0%"></div>
+                            <div id="extractProgressBar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-200" style="width: 0%"></div>
                         </div>
                     </div>
 
-                    <button type="button" id="checkPlagiarismBtn" class="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-500 text-white text-sm font-bold py-3.5 px-4 rounded-xl transition shadow-lg shadow-teal-500/20">
-                        Check Plagiarism Now
+                    <button type="button" id="analyzeAiBtn" class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-500 text-white text-sm font-bold py-3.5 px-4 rounded-xl transition shadow-lg shadow-indigo-500/20">
+                        Detect AI Content
                     </button>
                 </div>
 
-                <!-- Right Column: Score & Detailed Report -->
-                <div class="lg:col-span-5 bg-zinc-950/75 rounded-xl border border-zinc-800 p-5 flex flex-col justify-between min-h-[380px]">
+                <!-- Right Column: AI Probability Score & Breakdown -->
+                <div class="lg:col-span-5 bg-zinc-950/75 rounded-xl border border-zinc-800 p-5 flex flex-col justify-between min-h-[400px]">
                     <div>
                         <div class="flex items-center justify-between pb-3 mb-4 border-b border-zinc-800">
-                            <span class="text-xs font-semibold uppercase tracking-wider text-teal-400">Scan Report</span>
-                            <span id="sentenceCountLabel" class="text-[11px] text-zinc-500">Ready to scan</span>
+                            <span class="text-xs font-semibold uppercase tracking-wider text-indigo-400">AI Detection Verdict</span>
+                            <span id="verdictBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-400">Waiting for input</span>
                         </div>
 
-                        <!-- Score Meters -->
-                        <div class="grid grid-cols-2 gap-3 mb-5">
-                            <div class="bg-zinc-900/90 border border-rose-500/25 rounded-xl p-3.5 text-center">
-                                <p class="text-[11px] text-zinc-400 uppercase font-semibold">Plagiarized</p>
-                                <p id="plagiarizedScore" class="text-2xl font-extrabold text-rose-400 mt-1">0%</p>
+                        <!-- AI vs Human Score Cards -->
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div class="bg-zinc-900/90 border border-indigo-500/30 rounded-xl p-3.5 text-center">
+                                <p class="text-[11px] text-zinc-400 uppercase font-semibold">AI-Generated</p>
+                                <p id="aiScoreText" class="text-3xl font-extrabold text-indigo-400 mt-1">0%</p>
                             </div>
-                            <div class="bg-zinc-900/90 border border-emerald-500/25 rounded-xl p-3.5 text-center">
-                                <p class="text-[11px] text-zinc-400 uppercase font-semibold">Unique</p>
-                                <p id="uniqueScore" class="text-2xl font-extrabold text-emerald-400 mt-1">100%</p>
+                            <div class="bg-zinc-900/90 border border-emerald-500/30 rounded-xl p-3.5 text-center">
+                                <p class="text-[11px] text-zinc-400 uppercase font-semibold">Human-Written</p>
+                                <p id="humanScoreText" class="text-3xl font-extrabold text-emerald-400 mt-1">0%</p>
                             </div>
                         </div>
 
-                        <!-- Sentence Breakdown List -->
-                        <p class="text-xs font-semibold text-zinc-300 mb-2">Sentence-by-Sentence Analysis</p>
-                        <div id="resultsList" class="space-y-2.5 max-h-[250px] overflow-y-auto pr-1">
-                            <p class="text-xs text-zinc-500 text-center py-10">Enter text on the left and click "Check Plagiarism Now" to see detailed sentence matches.</p>
+                        <!-- Visual Ratio Bar -->
+                        <div class="w-full bg-zinc-800 rounded-full h-3 overflow-hidden flex mb-5">
+                            <div id="aiBarFill" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-3 transition-all duration-500" style="width: 0%"></div>
+                            <div id="humanBarFill" class="bg-emerald-500 h-3 transition-all duration-500" style="width: 0%"></div>
+                        </div>
+
+                        <!-- Linguistic Signals -->
+                        <div class="grid grid-cols-3 gap-2 mb-4 text-center">
+                            <div class="bg-zinc-900/70 p-2 rounded-lg border border-zinc-800">
+                                <p class="text-[10px] text-zinc-500">Burstiness</p>
+                                <p id="burstinessMetric" class="text-xs font-bold text-zinc-200 mt-0.5">-</p>
+                            </div>
+                            <div class="bg-zinc-900/70 p-2 rounded-lg border border-zinc-800">
+                                <p class="text-[10px] text-zinc-500">AI Phrases</p>
+                                <p id="aiPhrasesMetric" class="text-xs font-bold text-zinc-200 mt-0.5">-</p>
+                            </div>
+                            <div class="bg-zinc-900/70 p-2 rounded-lg border border-zinc-800">
+                                <p class="text-[10px] text-zinc-500">Vocabulary</p>
+                                <p id="vocabMetric" class="text-xs font-bold text-zinc-200 mt-0.5">-</p>
+                            </div>
+                        </div>
+
+                        <!-- Highlighted Sentences -->
+                        <p class="text-xs font-semibold text-zinc-300 mb-2">Sentence-by-Sentence Signals</p>
+                        <div id="sentenceBreakdownList" class="space-y-2 max-h-[210px] overflow-y-auto pr-1">
+                            <p class="text-xs text-zinc-500 text-center py-8">Upload a file or paste text, then click "Detect AI Content".</p>
                         </div>
                     </div>
 
                     <div class="mt-4 pt-3 border-t border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-500">
-                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Matched / Duplicate</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Original / Unique</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-indigo-500"></span> Likely AI Pattern</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Natural Human Flow</span>
                     </div>
                 </div>
             </div>
@@ -151,189 +185,275 @@
     </main>
 
     <script>
-        const modeWebBtn = document.getElementById('modeWebBtn');
-        const modeCompareBtn = document.getElementById('modeCompareBtn');
-        const compareBoxWrapper = document.getElementById('compareBoxWrapper');
-        const mainTextInput = document.getElementById('mainTextInput');
-        const referenceTextInput = document.getElementById('referenceTextInput');
-        const wordCountBadge = document.getElementById('wordCountBadge');
-        const sampleTextBtn = document.getElementById('sampleTextBtn');
-        const clearInputBtn = document.getElementById('clearInputBtn');
-        const checkPlagiarismBtn = document.getElementById('checkPlagiarismBtn');
-        const scanProgressWrapper = document.getElementById('scanProgressWrapper');
-        const scanStatusText = document.getElementById('scanStatusText');
-        const scanPercentText = document.getElementById('scanPercentText');
-        const scanProgressBar = document.getElementById('scanProgressBar');
-        const plagiarizedScore = document.getElementById('plagiarizedScore');
-        const uniqueScore = document.getElementById('uniqueScore');
-        const sentenceCountLabel = document.getElementById('sentenceCountLabel');
-        const resultsList = document.getElementById('resultsList');
-
-        let scanMode = 'web'; // 'web' or 'compare'
-
-        // Switch Modes
-        modeWebBtn.addEventListener('click', () => {
-            scanMode = 'web';
-            modeWebBtn.className = 'px-3 py-1 rounded-lg text-xs font-semibold bg-teal-600 text-white transition';
-            modeCompareBtn.className = 'px-3 py-1 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white transition';
-            compareBoxWrapper.classList.add('hidden');
-        });
-
-        modeCompareBtn.addEventListener('click', () => {
-            scanMode = 'compare';
-            modeCompareBtn.className = 'px-3 py-1 rounded-lg text-xs font-semibold bg-teal-600 text-white transition';
-            modeWebBtn.className = 'px-3 py-1 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white transition';
-            compareBoxWrapper.classList.remove('hidden');
-        });
-
-        // Live Word Count
-        mainTextInput.addEventListener('input', () => {
-            const words = mainTextInput.value.trim().split(/\s+/).filter(Boolean);
-            wordCountBadge.textContent = `${words.length} words`;
-        });
-
-        // Sample Text
-        sampleTextBtn.addEventListener('click', () => {
-            mainTextInput.value = "Artificial intelligence is intelligence demonstrated by machines, as opposed to natural intelligence displayed by animals including humans. Klever workspace utilities help developers convert images and extract text rapidly inside the browser. The Earth is the third planet from the Sun and the only astronomical object known to harbor life.";
-            mainTextInput.dispatchEvent(new Event('input'));
-        });
-
-        // Clear Button
-        clearInputBtn.addEventListener('click', () => {
-            mainTextInput.value = '';
-            referenceTextInput.value = '';
-            wordCountBadge.textContent = '0 words';
-            plagiarizedScore.textContent = '0%';
-            uniqueScore.textContent = '100%';
-            sentenceCountLabel.textContent = 'Ready to scan';
-            resultsList.innerHTML = '<p class="text-xs text-zinc-500 text-center py-10">Enter text on the left and click "Check Plagiarism Now" to see detailed sentence matches.</p>';
-        });
-
-        // Split text into clean sentences
-        function getSentences(text) {
-            return text
-                .split(/(?<=[.!?])\s+|\n+/)
-                .map(s => s.trim())
-                .filter(s => s.split(/\s+/).length >= 4);
+        // Configure PDF.js worker
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         }
 
-        // Calculate word overlap similarity (Jaccard + N-gram check)
-        function calculateSimilarity(str1, str2) {
-            const clean = (s) => s.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 2);
-            const words1 = clean(str1);
-            const words2 = clean(str2);
-            if (words1.length === 0 || words2.length === 0) return 0;
+        const anyFileInput = document.getElementById('anyFileInput');
+        const uploadedFileName = document.getElementById('uploadedFileName');
+        const fileExtractStatus = document.getElementById('fileExtractStatus');
+        const detectorInput = document.getElementById('detectorInput');
+        const wordCountLabel = document.getElementById('wordCountLabel');
+        const sampleAiBtn = document.getElementById('sampleAiBtn');
+        const sampleHumanBtn = document.getElementById('sampleHumanBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const extractProgressWrapper = document.getElementById('extractProgressWrapper');
+        const extractStatusText = document.getElementById('extractStatusText');
+        const extractPercentText = document.getElementById('extractPercentText');
+        const extractProgressBar = document.getElementById('extractProgressBar');
+        const analyzeAiBtn = document.getElementById('analyzeAiBtn');
 
-            const set2 = new Set(words2);
-            let matches = 0;
-            words1.forEach(w => { if (set2.has(w)) matches++; });
-            return Math.round((matches / words1.length) * 100);
+        const verdictBadge = document.getElementById('verdictBadge');
+        const aiScoreText = document.getElementById('aiScoreText');
+        const humanScoreText = document.getElementById('humanScoreText');
+        const aiBarFill = document.getElementById('aiBarFill');
+        const humanBarFill = document.getElementById('humanBarFill');
+        const burstinessMetric = document.getElementById('burstinessMetric');
+        const aiPhrasesMetric = document.getElementById('aiPhrasesMetric');
+        const vocabMetric = document.getElementById('vocabMetric');
+        const sentenceBreakdownList = document.getElementById('sentenceBreakdownList');
+
+        // Update word count
+        function updateWordCount() {
+            const words = detectorInput.value.trim().split(/\s+/).filter(Boolean);
+            wordCountLabel.textContent = `${words.length} words`;
         }
+        detectorInput.addEventListener('input', updateWordCount);
 
-        // Query Wikipedia OpenSearch API for Web Verification
-        async function checkSentenceOnWeb(sentence) {
-            const queryWords = sentence.replace(/[^\w\s]/g, '').split(/\s+/).slice(0, 10).join(' ');
-            const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(queryWords)}&format=json&origin=*&srlimit=2`;
+        // Handle ANY File Upload (PDF, DOCX, TXT, CSV, HTML, Images)
+        anyFileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            uploadedFileName.textContent = `File: ${file.name}`;
+            fileExtractStatus.textContent = 'Extracting text from file...';
+            extractProgressWrapper.classList.remove('hidden');
+            extractProgressBar.style.width = '20%';
+            extractPercentText.textContent = '20%';
+            analyzeAiBtn.disabled = true;
+
+            const ext = file.name.split('.').pop().toLowerCase();
+
             try {
-                const res = await fetch(url);
-                const data = await res.json();
-                if (data.query && data.query.search && data.query.search.length > 0) {
-                    const topHit = data.query.search[0];
-                    const cleanSnippet = topHit.snippet.replace(/<[^>]*>?/gm, '');
-                    const sim = calculateSimilarity(sentence, cleanSnippet);
-                    if (sim >= 55) {
-                        return {
-                            matched: true,
-                            similarity: Math.min(sim + 15, 100),
-                            sourceTitle: topHit.title,
-                            sourceUrl: `https://en.wikipedia.org/wiki/${encodeURIComponent(topHit.title.replace(/ /g, '_'))}`
-                        };
+                let extracted = '';
+
+                if (ext === 'pdf') {
+                    extractStatusText.textContent = 'Reading PDF pages...';
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const content = await page.getTextContent();
+                        extracted += content.items.map(item => item.str).join(' ') + '\n\n';
+                        const pct = Math.round((i / pdf.numPages) * 100);
+                        extractProgressBar.style.width = `${pct}%`;
+                        extractPercentText.textContent = `${pct}%`;
                     }
+                } else if (ext === 'docx') {
+                    extractStatusText.textContent = 'Extracting Word (.docx) content...';
+                    const arrayBuffer = await file.arrayBuffer();
+                    const result = await mammoth.extractRawText({ arrayBuffer });
+                    extracted = result.value;
+                    extractProgressBar.style.width = '100%';
+                    extractPercentText.textContent = '100%';
+                } else if (['png', 'jpg', 'jpeg', 'webp', 'bmp'].includes(ext)) {
+                    extractStatusText.textContent = 'Running OCR on uploaded image...';
+                    const worker = await Tesseract.createWorker('eng', 1, {
+                        logger: (m) => {
+                            if (m.status === 'recognizing text') {
+                                const pct = Math.round(m.progress * 100);
+                                extractProgressBar.style.width = `${pct}%`;
+                                extractPercentText.textContent = `${pct}%`;
+                            }
+                        }
+                    });
+                    const { data: { text } } = await worker.recognize(file);
+                    await worker.terminate();
+                    extracted = text;
+                } else {
+                    // TXT, CSV, MD, HTML, JSON, DOC plain fallback
+                    extractStatusText.textContent = 'Reading text file...';
+                    extracted = await file.text();
+                    // Strip HTML tags if .html
+                    if (ext === 'html' || ext === 'htm') {
+                        const doc = new DOMParser().parseFromString(extracted, 'text/html');
+                        extracted = doc.body.textContent || '';
+                    }
+                    extractProgressBar.style.width = '100%';
+                    extractPercentText.textContent = '100%';
                 }
-            } catch (e) {
-                console.warn('Web check fallback:', e);
+
+                detectorInput.value = extracted.trim();
+                updateWordCount();
+                fileExtractStatus.textContent = `Loaded successfully (${file.name})`;
+                
+                // Auto-run detection if text was extracted
+                if (detectorInput.value.length > 20) {
+                    runAiDetection();
+                }
+            } catch (err) {
+                alert('Error reading file: ' + err.message);
+                fileExtractStatus.textContent = 'Failed to extract text from this file.';
+            } finally {
+                analyzeAiBtn.disabled = false;
+                setTimeout(() => extractProgressWrapper.classList.add('hidden'), 600);
             }
-            return { matched: false, similarity: 0 };
+        });
+
+        // Sample Texts
+        sampleAiBtn.addEventListener('click', () => {
+            detectorInput.value = "In today's rapidly evolving digital landscape, leveraging cutting-edge artificial intelligence has become paramount for businesses aiming to streamline operations. Furthermore, it is important to note that delving into automated workflows fosters seamless scalability and enhances overall productivity. Ultimately, embracing these transformative solutions ensures sustainable growth in an increasingly competitive ecosystem.";
+            updateWordCount();
+            runAiDetection();
+        });
+
+        sampleHumanBtn.addEventListener('click', () => {
+            detectorInput.value = "Honestly, I didn't expect the rain to start right when I stepped out without my umbrella! Ended up ducking into a tiny roadside tea stall near Ashram Road, and the ginger chai there was way better than the fancy cafe I was headed to. Funny how ruined plans sometimes turn out great.";
+            updateWordCount();
+            runAiDetection();
+        });
+
+        clearAllBtn.addEventListener('click', () => {
+            detectorInput.value = '';
+            anyFileInput.value = '';
+            uploadedFileName.textContent = 'Click or Drop ANY File (PDF, DOCX, TXT, Image...)';
+            fileExtractStatus.textContent = 'Automatically extracts text from uploaded files';
+            updateWordCount();
+            aiScoreText.textContent = '0%';
+            humanScoreText.textContent = '0%';
+            aiBarFill.style.width = '0%';
+            humanBarFill.style.width = '0%';
+            verdictBadge.textContent = 'Waiting for input';
+            verdictBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-400';
+            burstinessMetric.textContent = '-';
+            aiPhrasesMetric.textContent = '-';
+            vocabMetric.textContent = '-';
+            sentenceBreakdownList.innerHTML = '<p class="text-xs text-zinc-500 text-center py-8">Upload a file or paste text, then click "Detect AI Content".</p>';
+        });
+
+        // Common LLM / ChatGPT overused markers
+        const AI_MARKERS = [
+            'delve', 'delving', 'tapestry', 'testament', 'paramount', 'pivotal', 'landscape',
+            'furthermore', 'moreover', 'in conclusion', 'it is important to note', 'crucial',
+            'foster', 'fostering', 'streamline', 'seamless', 'seamlessly', 'cutting-edge',
+            'transformative', 'ecosystem', 'leverage', 'leveraging', 'underscore', 'underscores',
+            'vibrant', 'meticulous', 'meticulously', 'comprehensive', 'realm', 'navigating',
+            'ever-evolving', 'rapidly evolving', 'game-changer', 'holistic', 'synergy', 'ultimately'
+        ];
+
+        function analyzeSentence(sentence) {
+            const lower = sentence.toLowerCase();
+            const words = lower.replace(/[^\w\s']/g, '').split(/\s+/).filter(Boolean);
+            if (words.length === 0) return { aiProb: 0, hits: [] };
+
+            let score = 25; // baseline
+            const hits = [];
+
+            // 1. Check AI vocabulary markers
+            AI_MARKERS.forEach(marker => {
+                if (lower.includes(marker)) {
+                    score += 22;
+                    hits.push(marker);
+                }
+            });
+
+            // 2. Formal transition openers
+            if (/^(furthermore|moreover|additionally|consequently|nevertheless|ultimately|in summary|in conclusion|overall),?\s/i.test(sentence)) {
+                score += 20;
+            }
+
+            // 3. Contractions & casual human markers reduce AI score
+            if (/\b(i'm|don't|didn't|can't|won't|it's|that's|i've|we're|honestly|literally|yeah|stuff|kinda|gonna)\b/i.test(lower)) {
+                score -= 28;
+            }
+
+            // 4. Exclamation / personal pronouns ("I", "my", "we")
+            if (/\b(i|my|me|mine)\b/i.test(lower)) {
+                score -= 12;
+            }
+
+            return {
+                aiProb: Math.max(4, Math.min(98, score)),
+                hits
+            };
         }
 
-        // Run Plagiarism Scan
-        checkPlagiarismBtn.addEventListener('click', async () => {
-            const rawText = mainTextInput.value.trim();
-            if (!rawText) {
-                alert('Please paste some text first!');
+        function runAiDetection() {
+            const text = detectorInput.value.trim();
+            if (!text || text.split(/\s+/).length < 8) {
+                alert('Please provide at least 8 words of text or upload a file with readable text.');
                 return;
             }
 
-            const sentences = getSentences(rawText);
-            if (sentences.length === 0) {
-                alert('Please enter at least one full sentence (minimum 4 words).');
-                return;
+            const sentences = text.split(/(?<=[.!?])\s+|\n+/).map(s => s.trim()).filter(s => s.split(/\s+/).length >= 3);
+            if (sentences.length === 0) return;
+
+            let totalAiScore = 0;
+            let totalMarkers = 0;
+            const lengths = sentences.map(s => s.split(/\s+/).length);
+
+            // Calculate sentence length variance (Burstiness: Humans vary sentence lengths much more than AI)
+            const avgLen = lengths.reduce((a, b) => a + b, 0) / lengths.length;
+            const variance = lengths.reduce((a, b) => a + Math.pow(b - avgLen, 2), 0) / lengths.length;
+            const stdDev = Math.sqrt(variance);
+
+            sentenceBreakdownList.innerHTML = '';
+
+            sentences.forEach(sentence => {
+                const res = analyzeSentence(sentence);
+                totalAiScore += res.aiProb;
+                totalMarkers += res.hits.length;
+
+                const isAi = res.aiProb >= 55;
+                const item = document.createElement('div');
+                item.className = isAi
+                    ? 'p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-xs'
+                    : 'p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs';
+
+                item.innerHTML = `
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="font-bold ${isAi ? 'text-indigo-400' : 'text-emerald-400'}">
+                            ${isAi ? `AI Pattern (${res.aiProb}\%)` : `Human-like (${100 - res.aiProb}%)`}
+                        </span>
+                        ${res.hits.length ? `<span class="text-[10px] text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded">Flagged: ${res.hits.slice(0, 2).join(', ')}</span>` : ''}
+                    </div>
+                    <p class="text-zinc-300 leading-relaxed">${sentence}</p>
+                `;
+                sentenceBreakdownList.appendChild(item);
+            });
+
+            // Adjust overall score using burstiness (low variance = uniform AI cadence)
+            let avgAi = Math.round(totalAiScore / sentences.length);
+            if (sentences.length >= 3 && stdDev < 3.5) avgAi = Math.min(97, avgAi + 12);
+            if (stdDev > 8) avgAi = Math.max(5, avgAi - 12);
+
+            const humanPct = 100 - avgAi;
+
+            aiScoreText.textContent = `${avgAi}%`;
+            humanScoreText.textContent = `${humanPct}%`;
+            aiBarFill.style.width = `${avgAi}%`;
+            humanBarFill.style.width = `${humanPct}%`;
+
+            // Metrics
+            burstinessMetric.textContent = stdDev > 6 ? 'High (Human)' : 'Uniform (AI)';
+            aiPhrasesMetric.textContent = `${totalMarkers} found`;
+            vocabMetric.textContent = avgAi > 55 ? 'Formulaic' : 'Natural';
+
+            // Verdict Badge
+            if (avgAi >= 65) {
+                verdictBadge.textContent = 'Likely AI-Generated';
+                verdictBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/40';
+            } else if (avgAi >= 40) {
+                verdictBadge.textContent = 'Mixed / AI-Edited';
+                verdictBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40';
+            } else {
+                verdictBadge.textContent = 'Likely Human-Written';
+                verdictBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
             }
+        }
 
-            if (scanMode === 'compare' && !referenceTextInput.value.trim()) {
-                alert('Please paste the Reference / Original text to compare against!');
-                return;
-            }
-
-            checkPlagiarismBtn.disabled = true;
-            scanProgressWrapper.classList.remove('hidden');
-            resultsList.innerHTML = '';
-            sentenceCountLabel.textContent = `Scanning ${sentences.length} sentence(s)...`;
-
-            let plagiarizedCount = 0;
-            const refText = referenceTextInput.value.trim();
-
-            for (let i = 0; i < sentences.length; i++) {
-                const sentence = sentences[i];
-                const percent = Math.round(((i + 1) / sentences.length) * 100);
-                scanProgressBar.style.width = `${percent}%`;
-                scanPercentText.textContent = `${percent}%`;
-                scanStatusText.textContent = `Checking sentence ${i + 1} of ${sentences.length}...`;
-
-                let result = { matched: false, similarity: 0 };
-
-                if (scanMode === 'compare') {
-                    const sim = calculateSimilarity(sentence, refText);
-                    if (sim >= 60) {
-                        result = { matched: true, similarity: sim, sourceTitle: 'Reference Document' };
-                    }
-                } else {
-                    result = await checkSentenceOnWeb(sentence);
-                }
-
-                const card = document.createElement('div');
-                if (result.matched) {
-                    plagiarizedCount++;
-                    card.className = 'p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs';
-                    card.innerHTML = `
-                        <div class="flex items-center justify-between mb-1">
-                            <span class="font-bold text-rose-400">Matched (${result.similarity}%)</span>
-                            ${result.sourceUrl ? `<a href="${result.sourceUrl}" target="_blank" class="text-[11px] text-teal-400 hover:underline">Source: ${result.sourceTitle} ↗</a>` : `<span class="text-[11px] text-amber-400">${result.sourceTitle}</span>`}
-                        </div>
-                        <p class="text-zinc-200 leading-relaxed">"${sentence}"</p>
-                    `;
-                } else {
-                    card.className = 'p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs';
-                    card.innerHTML = `
-                        <div class="flex items-center justify-between mb-1">
-                            <span class="font-semibold text-emerald-400">Unique</span>
-                        </div>
-                        <p class="text-zinc-300 leading-relaxed">"${sentence}"</p>
-                    `;
-                }
-                resultsList.appendChild(card);
-            }
-
-            const plagPercent = Math.round((plagiarizedCount / sentences.length) * 100);
-            const uniqPercent = 100 - plagPercent;
-
-            plagiarizedScore.textContent = `${plagPercent}%`;
-            uniqueScore.textContent = `${uniqPercent}%`;
-            sentenceCountLabel.textContent = `${plagiarizedCount} of ${sentences.length} matched`;
-
-            checkPlagiarismBtn.disabled = false;
-            scanProgressWrapper.classList.add('hidden');
-        });
+        analyzeAiBtn.addEventListener('click', runAiDetection);
     </script>
 </body>
 </html>
