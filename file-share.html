@@ -30,10 +30,11 @@
     <!-- Header / Navigation Bar -->
     <header class="w-full bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/80 sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            <a href="index.html" class="flex items-center gap-2.5 text-lg font-extrabold tracking-tight">
-                <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 via-amber-500 to-violet-600 flex items-center justify-center text-white shadow-lg shadow-rose-500/20">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            <a href="index.html" class="flex items-center gap-2.5 text-lg font-extrabold tracking-tight group">
+                <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 via-amber-500 to-violet-600 flex items-center justify-center text-white shadow-lg shadow-rose-500/20 group-hover:scale-105 transition-transform">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 4v16" />
+                        <path d="M18 4L8 12l10 8" />
                     </svg>
                 </span>
                 <span class="bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">Klever</span>
@@ -45,7 +46,7 @@
                 <a href="pdf-to-excel.html" class="hidden md:inline hover:text-white transition">PDF to Excel</a>
                 <a href="bulk-rename.html" class="hidden lg:inline hover:text-white transition">Bulk Rename</a>
                 <a href="url-downloader.html" class="hidden lg:inline hover:text-white transition">URL to ZIP</a>
-                <a href="file-share.html" class="hidden sm:inline text-white font-bold text-violet-400">File Share</a>
+                <a href="file-share.html" class="hidden sm:inline font-bold text-violet-400">File Share</a>
                 <a href="https://tyrescart-scrapping.klever.ae/tcsadmin/files" target="_blank" rel="noopener noreferrer" class="bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white px-4 py-2 rounded-xl transition font-bold shadow-lg shadow-rose-500/25 flex items-center gap-1.5">
                     <span>Data scraping</span>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,11 +102,11 @@
                 <div class="bg-zinc-950/75 rounded-xl border border-zinc-800 p-4 flex flex-col h-76 min-h-[290px]">
                     <div class="flex items-center justify-between pb-3 mb-3 border-b border-zinc-800">
                         <span class="text-xs font-semibold uppercase tracking-wider text-violet-400">Available Files to Download</span>
-                        <span class="text-[11px] text-zinc-400" id="sharedFilesCount">Setup Required</span>
+                        <span class="text-[11px] text-zinc-400" id="sharedFilesCount">Loading...</span>
                     </div>
 
                     <div id="sharedFilesList" class="flex-1 overflow-y-auto space-y-2.5 pr-1">
-                        <p class="text-xs text-zinc-500 text-center mt-12">Connect Firebase config in file-share.html to see live shared files.</p>
+                        <p class="text-xs text-zinc-500 text-center mt-12">Loading shared files...</p>
                     </div>
                 </div>
             </div>
@@ -118,12 +119,13 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyB3wRKB4I1N6LyBhBPQl-gvBVJh2CUbjJ8",
+            authDomain: "klever-fileshare.firebaseapp.com",
+            projectId: "klever-fileshare",
+            storageBucket: "klever-fileshare.firebasestorage.app",
+            messagingSenderId: "144242933316",
+            appId: "1:144242933316:web:d0584b8d55d6f608c30611",
+            measurementId: "G-LB8DNS6F2F"
         };
 
         const shareInput = document.getElementById('shareInput');
@@ -198,6 +200,9 @@
                     itemDiv.appendChild(infoDiv); itemDiv.appendChild(actionsDiv);
                     sharedFilesList.appendChild(itemDiv);
                 });
+            }, (error) => {
+                sharedFilesCount.textContent = 'Connection Error';
+                sharedFilesList.innerHTML = `<p class="text-xs text-rose-400 text-center mt-10">Firestore Error: ${error.message}</p>`;
             });
 
             shareUploadBtn.addEventListener('click', () => {
@@ -218,7 +223,9 @@
                         await addDoc(collection(db, "shared_files"), { name: fileToShare.name, size: fileToShare.size, url, storagePath, createdAt: serverTimestamp() });
                         fileToShare = null; shareInput.value = '';
                         shareSelectedName.textContent = 'Max file size: 1 GB';
+                        shareSelectedName.classList.remove('text-violet-400', 'font-medium');
                         uploadProgressWrapper.classList.add('hidden');
+                        uploadProgressBar.style.width = '0%';
                     }
                 );
             });
