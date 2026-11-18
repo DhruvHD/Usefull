@@ -13,17 +13,23 @@
         <h1 class="text-2xl font-bold mb-1 text-center text-blue-400">Bulk Image Converter</h1>
         <p class="text-slate-400 text-sm text-center mb-6">100% Private • Convert & Download as ZIP</p>
 
-        <!-- Upload Area (Using div + button trigger instead of label for better multi-file reliability) -->
-        <div id="dropZone" class="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-slate-600 rounded-xl cursor-pointer hover:border-blue-500 hover:bg-slate-700/50 transition">
+        <!-- Upload Area: Native file input directly covers the entire box -->
+        <div id="dropZone" class="relative flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-slate-600 rounded-xl hover:border-blue-500 hover:bg-slate-700/50 transition overflow-hidden">
+            <input 
+                id="imageInput" 
+                type="file" 
+                accept="image/*,.webp,.avif,.jfif,.png,.jpg,.jpeg" 
+                multiple 
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+            />
             <div class="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4 pointer-events-none">
                 <svg class="w-8 h-8 mb-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                 </svg>
                 <p class="mb-1 text-sm text-slate-300"><span class="font-semibold text-blue-400">Click here to select multiple images</span></p>
-                <p class="text-xs text-slate-400">or drag & drop files anywhere here</p>
-                <p class="text-[11px] text-slate-500 mt-1">Hold Ctrl (Windows) or Cmd (Mac) to select multiple</p>
+                <p class="text-xs text-slate-400">or drag & drop files here</p>
+                <p class="text-[11px] text-slate-500 mt-1">Select multiple files using Ctrl / Cmd or Mouse Drag</p>
             </div>
-            <input id="imageInput" type="file" accept="image/*,.webp,.avif,.jfif,.png,.jpg,.jpeg" multiple class="hidden" />
         </div>
 
         <!-- Selected Files List -->
@@ -77,51 +83,27 @@
 
         let selectedFiles = [];
 
-        // Click on dropZone triggers hidden file input
-        dropZone.addEventListener('click', () => {
-            imageInput.click();
-        });
-
-        // Prevent default browser drag behavior across the entire window
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            window.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            }, false);
-        });
-
         // Highlight dropZone on drag
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => {
-                dropZone.classList.add('border-blue-500', 'bg-slate-700/70');
-            });
+        imageInput.addEventListener('dragenter', () => {
+            dropZone.classList.add('border-blue-500', 'bg-slate-700/70');
         });
 
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => {
-                dropZone.classList.remove('border-blue-500', 'bg-slate-700/70');
-            });
+        imageInput.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-blue-500', 'bg-slate-700/70');
         });
 
-        // Handle dropped files
-        dropZone.addEventListener('drop', (e) => {
-            if (e.dataTransfer && e.dataTransfer.files.length > 0) {
-                handleFiles(e.dataTransfer.files);
-            }
+        imageInput.addEventListener('drop', () => {
+            dropZone.classList.remove('border-blue-500', 'bg-slate-700/70');
         });
 
-        // Handle selected files via dialog
+        // Handle selected or dropped files
         imageInput.addEventListener('change', (e) => {
             if (e.target.files && e.target.files.length > 0) {
                 handleFiles(e.target.files);
-                // Reset input so user can add more files or re-select same files later
-                imageInput.value = '';
+                imageInput.value = ''; // Reset for next selection
             }
         });
 
         function isValidImage(file) {
             if (file.type && file.type.startsWith('image/')) return true;
-            const validExts = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.avif', '.jfif', '.svg'];
-            const lowerName = file.name.toLowerCase();
-            return validExts.some(ext => lowerName.endsWith(ext));
-        }
+            const validExts =
