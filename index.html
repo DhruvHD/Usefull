@@ -3,73 +3,610 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulk Image Format Converter</title>
+    <title>MyTools - Image, PDF, URL Downloader & File Share</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        html { scroll-behavior: smooth; }
+    </style>
 </head>
-<body class="bg-slate-900 text-white min-h-screen flex items-center justify-center p-4">
+<body class="bg-slate-900 text-white min-h-screen flex flex-col">
 
-    <div class="bg-slate-800 p-8 rounded-2xl shadow-xl max-w-lg w-full border border-slate-700">
-        <h1 class="text-2xl font-bold mb-1 text-center text-blue-400">Bulk Image Converter</h1>
-        <p class="text-slate-400 text-sm text-center mb-6">100% Private • Convert & Download as ZIP</p>
-
-        <!-- Upload Area: Native file input directly covers the entire box -->
-        <div id="dropZone" class="relative flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-slate-600 rounded-xl hover:border-blue-500 hover:bg-slate-700/50 transition overflow-hidden">
-            <input 
-                id="imageInput" 
-                type="file" 
-                accept="image/*,.webp,.avif,.jfif,.png,.jpg,.jpeg" 
-                multiple 
-                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
-            />
-            <div class="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4 pointer-events-none">
-                <svg class="w-8 h-8 mb-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+    <!-- Header / Navigation Bar -->
+    <header class="w-full bg-slate-800/90 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <a href="#" class="flex items-center gap-2 text-lg font-bold text-blue-400 hover:text-blue-300 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                 </svg>
-                <p class="mb-1 text-sm text-slate-300"><span class="font-semibold text-blue-400">Click here to select multiple images</span></p>
-                <p class="text-xs text-slate-400">or drag & drop files here</p>
-                <p class="text-[11px] text-slate-500 mt-1">Select multiple files using Ctrl / Cmd or Mouse Drag</p>
+                <span>MyTools</span>
+            </a>
+
+            <nav class="flex items-center gap-4 sm:gap-5 text-sm font-medium text-slate-300">
+                <a href="#image-converter" class="hidden lg:inline hover:text-blue-400 transition">Image Converter</a>
+                <a href="#pdf-to-excel" class="hidden lg:inline hover:text-emerald-400 transition">PDF to Excel</a>
+                <a href="#url-downloader" class="hidden md:inline hover:text-amber-400 transition">URL to ZIP</a>
+                <a href="#file-share" class="hidden sm:inline hover:text-purple-400 transition">File Share</a>
+                <a href="https://tyrescart-scrapping.klever.ae/tcsadmin/files" target="_blank" rel="noopener noreferrer" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition font-semibold shadow-sm flex items-center gap-1.5">
+                    <span>Data scraping</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-10 space-y-10">
+
+        <!-- TOP ROW: IMAGE CONVERTER & PDF TO EXCEL -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+
+            <!-- DIV 1: BULK IMAGE CONVERTER -->
+            <div id="image-converter" class="bg-slate-800 p-7 rounded-2xl shadow-xl w-full border border-slate-700 scroll-mt-24">
+                <div class="flex items-center justify-center gap-2 mb-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                    <h2 class="text-xl font-bold text-blue-400">Bulk Image Converter</h2>
+                </div>
+                <p class="text-slate-400 text-xs text-center mb-6">100% Private • Convert & Download as ZIP</p>
+
+                <div id="dropZone" class="relative flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-slate-600 rounded-xl hover:border-blue-500 hover:bg-slate-700/50 transition overflow-hidden">
+                    <input id="imageInput" type="file" accept="image/*,.webp,.avif,.jfif,.png,.jpg,.jpeg" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                    <div class="flex flex-col items-center justify-center text-center px-4 pointer-events-none">
+                        <svg class="w-7 h-7 mb-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <p class="text-sm text-slate-300"><span class="font-semibold text-blue-400">Click to select multiple images</span> or drag & drop</p>
+                        <p class="text-[11px] text-slate-500 mt-1">PNG, JPG, WEBP, AVIF, BMP</p>
+                    </div>
+                </div>
+
+                <div id="fileListContainer" class="hidden mt-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Selected Images (<span id="fileCount">0</span>)</span>
+                        <button type="button" id="clearBtn" class="text-xs text-red-400 hover:text-red-300">Clear All</button>
+                    </div>
+                    <ul id="fileList" class="max-h-36 overflow-y-auto space-y-1.5 bg-slate-900/60 p-3 rounded-lg border border-slate-700 text-xs text-slate-300"></ul>
+                </div>
+
+                <div class="mt-5 space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Convert All To:</label>
+                        <select id="formatSelect" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:ring-blue-500 focus:border-blue-500">
+                            <option value="image/webp">WEBP (Best for Web / E-commerce)</option>
+                            <option value="image/jpeg">JPG / JPEG</option>
+                            <option value="image/png">PNG (Transparent)</option>
+                        </select>
+                    </div>
+
+                    <div id="qualityContainer">
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Quality: <span id="qualityValue">90</span>%</label>
+                        <input id="qualitySlider" type="range" min="10" max="100" value="90" class="w-full accent-blue-500">
+                    </div>
+                </div>
+
+                <button type="button" id="convertBtn" disabled class="mt-6 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2">
+                    <span id="btnText">Convert & Download Images</span>
+                </button>
+            </div>
+
+            <!-- DIV 2: PDF TO EXCEL CONVERTER -->
+            <div id="pdf-to-excel" class="bg-slate-800 p-7 rounded-2xl shadow-xl w-full border border-slate-700 scroll-mt-24">
+                <div class="flex items-center justify-center gap-2 mb-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <h2 class="text-xl font-bold text-emerald-400">PDF to Excel Converter</h2>
+                </div>
+                <p class="text-slate-400 text-xs text-center mb-6">Extract PDF Tables & Text to .XLSX • 100% Client-Side</p>
+
+                <div id="pdfDropZone" class="relative flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-slate-600 rounded-xl hover:border-emerald-500 hover:bg-slate-700/50 transition overflow-hidden">
+                    <input id="pdfInput" type="file" accept=".pdf,application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                    <div class="flex flex-col items-center justify-center text-center px-4 pointer-events-none">
+                        <svg class="w-7 h-7 mb-2 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <p class="text-sm text-slate-300"><span class="font-semibold text-emerald-400">Click to select PDF file</span> or drag & drop</p>
+                        <p class="text-[11px] text-slate-500 mt-1" id="pdfFileName">Supports text-based PDFs (Invoices, Statements, Lists)</p>
+                    </div>
+                </div>
+
+                <div class="mt-5 space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Sheet Layout Mode:</label>
+                        <select id="pdfModeSelect" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:ring-emerald-500 focus:border-emerald-500">
+                            <option value="single">Merge All Pages into One Sheet</option>
+                            <option value="separate">Separate Sheet for Each Page</option>
+                        </select>
+                    </div>
+
+                    <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700 text-xs text-slate-400">
+                        <span class="text-emerald-400 font-semibold">Tip:</span> Text-based PDFs (bank statements, invoices, reports) convert cleanly into rows & columns.
+                    </div>
+                </div>
+
+                <button type="button" id="pdfConvertBtn" disabled class="mt-6 w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2">
+                    <span id="pdfBtnText">Convert PDF to Excel (.xlsx)</span>
+                </button>
             </div>
         </div>
 
-        <!-- Selected Files List -->
-        <div id="fileListContainer" class="hidden mt-4">
-            <div class="flex justify-between items-center mb-2">
-                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Selected Files (<span id="fileCount">0</span>)</span>
-                <button type="button" id="clearBtn" class="text-xs text-red-400 hover:text-red-300">Clear All</button>
+        <!-- DIV 3: BULK IMAGE URL TO ZIP DOWNLOADER (MAX 1000 URLs) -->
+        <div id="url-downloader" class="bg-slate-800 p-7 rounded-2xl shadow-xl w-full border border-slate-700 scroll-mt-24">
+            <div class="flex items-center justify-center gap-2 mb-1">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <h2 class="text-xl font-bold text-amber-400">Bulk Image URL to ZIP Downloader</h2>
             </div>
-            <ul id="fileList" class="max-h-40 overflow-y-auto space-y-1.5 bg-slate-900/60 p-3 rounded-lg border border-slate-700 text-xs text-slate-300">
-            </ul>
+            <p class="text-slate-400 text-xs text-center mb-6">Paste up to 1,000 Image URLs (or upload CSV) • Live Progress & Auto ZIP Download</p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Left Side: URLs Input & Auth -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                            Image URLs (<span id="urlCountBadge" class="text-amber-400">0</span> / 1000)
+                        </label>
+                        <label class="text-xs text-amber-400 hover:text-amber-300 cursor-pointer font-medium">
+                            + Import CSV / TXT
+                            <input id="csvUrlInput" type="file" accept=".csv,.txt" class="hidden" />
+                        </label>
+                    </div>
+
+                    <textarea id="urlTextarea" rows="7" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.png&#10;Paste up to 1,000 URLs (one per line or comma separated)..." class="w-full bg-slate-900/80 border border-slate-600 rounded-xl p-3 text-xs text-slate-200 focus:ring-amber-500 focus:border-amber-500 font-mono"></textarea>
+
+                    <!-- Optional Basic Auth (Same as PHP cURL) -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1">Basic Auth Username (Optional)</label>
+                            <input id="authUser" type="text" placeholder="e.g. test" class="w-full bg-slate-700/70 border border-slate-600 rounded-lg px-3 py-2 text-xs text-white focus:border-amber-500 outline-none" />
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1">Basic Auth Password (Optional)</label>
+                            <input id="authPass" type="password" placeholder="e.g. test" class="w-full bg-slate-700/70 border border-slate-600 rounded-lg px-3 py-2 text-xs text-white focus:border-amber-500 outline-none" />
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button type="button" id="startUrlDownloadBtn" class="flex-1 bg-amber-600 hover:bg-amber-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 px-4 rounded-xl transition">
+                            Fetch Images & Build ZIP
+                        </button>
+                        <button type="button" id="stopUrlDownloadBtn" class="hidden bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-3 px-4 rounded-xl transition">
+                            Stop
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Side: Live Progress Bar, Stats & ZIP Download -->
+                <div class="bg-slate-900/70 rounded-xl border border-slate-700 p-5 flex flex-col justify-between h-full min-h-[300px]">
+                    <div>
+                        <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-700">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-amber-400">Live Download Progress</span>
+                            <span id="urlPercentLabel" class="text-sm font-bold text-white">0%</span>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-slate-700 rounded-full h-3.5 overflow-hidden mb-4">
+                            <div id="urlProgressBar" class="bg-amber-500 h-3.5 rounded-full transition-all duration-200" style="width: 0%"></div>
+                        </div>
+
+                        <!-- 4 Counters: Total, Done, Remaining, Failed -->
+                        <div class="grid grid-cols-4 gap-2 text-center mb-4">
+                            <div class="bg-slate-800 p-2 rounded-lg border border-slate-700">
+                                <p class="text-[10px] text-slate-400 uppercase">Total</p>
+                                <p id="statTotal" class="text-sm font-bold text-white">0</p>
+                            </div>
+                            <div class="bg-slate-800 p-2 rounded-lg border border-slate-700">
+                                <p class="text-[10px] text-emerald-400 uppercase">Downloaded</p>
+                                <p id="statSuccess" class="text-sm font-bold text-emerald-400">0</p>
+                            </div>
+                            <div class="bg-slate-800 p-2 rounded-lg border border-slate-700">
+                                <p class="text-[10px] text-amber-400 uppercase">Remaining</p>
+                                <p id="statRemaining" class="text-sm font-bold text-amber-400">0</p>
+                            </div>
+                            <div class="bg-slate-800 p-2 rounded-lg border border-slate-700">
+                                <p class="text-[10px] text-red-400 uppercase">Failed</p>
+                                <p id="statFailed" class="text-sm font-bold text-red-400">0</p>
+                            </div>
+                        </div>
+
+                        <!-- Live Activity Log -->
+                        <div id="urlLogBox" class="bg-slate-950/80 border border-slate-800 rounded-lg p-3 h-32 overflow-y-auto font-mono text-[11px] text-slate-400 space-y-1">
+                            <p>Ready. Paste URLs on the left and click "Fetch Images & Build ZIP".</p>
+                        </div>
+                    </div>
+
+                    <!-- Final ZIP Download Button -->
+                    <button type="button" id="downloadUrlZipBtn" disabled class="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 px-4 rounded-xl transition">
+                        Download ZIP File (0 Images Ready)
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <!-- Format & Quality Selection -->
-        <div class="mt-6 space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-slate-300 mb-1">Convert All To:</label>
-                <select id="formatSelect" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2.5 text-white focus:ring-blue-500 focus:border-blue-500">
-                    <option value="image/webp">WEBP (Best for Web / E-commerce)</option>
-                    <option value="image/jpeg">JPG / JPEG</option>
-                    <option value="image/png">PNG (Transparent)</option>
-                </select>
+        <!-- DIV 4: QUICK FILE / ZIP SHARE (UP TO 1GB) -->
+        <div id="file-share" class="bg-slate-800 p-7 rounded-2xl shadow-xl w-full border border-slate-700 scroll-mt-24">
+            <div class="flex items-center justify-center gap-2 mb-1">
+                <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+                <h2 class="text-xl font-bold text-purple-400">Quick File & ZIP Drop (Up to 1GB)</h2>
             </div>
+            <p class="text-slate-400 text-xs text-center mb-6">Upload from one side, anyone opening this site can download directly from the list</p>
 
-            <div id="qualityContainer">
-                <label class="block text-sm font-medium text-slate-300 mb-1">
-                    Quality: <span id="qualityValue">90</span>%
-                </label>
-                <input id="qualitySlider" type="range" min="10" max="100" value="90" class="w-full accent-blue-500">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="flex flex-col justify-between">
+                    <div id="shareDropZone" class="relative flex flex-col items-center justify-center w-full h-44 border-2 border-dashed border-slate-600 rounded-xl hover:border-purple-500 hover:bg-slate-700/50 transition overflow-hidden">
+                        <input id="shareInput" type="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                        <div class="flex flex-col items-center justify-center text-center px-4 pointer-events-none">
+                            <svg class="w-8 h-8 mb-2 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-sm text-slate-300"><span class="font-semibold text-purple-400">Click to select ZIP / Any File</span> or drag & drop</p>
+                            <p class="text-xs text-slate-500 mt-1" id="shareSelectedName">Max file size: 1 GB</p>
+                        </div>
+                    </div>
+
+                    <div id="uploadProgressWrapper" class="hidden mt-4">
+                        <div class="flex justify-between text-xs text-slate-300 mb-1">
+                            <span id="uploadStatusText">Uploading...</span>
+                            <span id="uploadPercentText">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-700 rounded-full h-2.5 overflow-hidden">
+                            <div id="uploadProgressBar" class="bg-purple-500 h-2.5 rounded-full transition-all duration-200" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <button type="button" id="shareUploadBtn" disabled class="mt-4 w-full bg-purple-600 hover:bg-purple-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 px-4 rounded-xl transition">
+                        Upload File to Shared Board
+                    </button>
+                </div>
+
+                <div class="bg-slate-900/70 rounded-xl border border-slate-700 p-4 flex flex-col h-72">
+                    <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-700">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-purple-400">Available Files to Download</span>
+                        <span class="text-[11px] text-slate-400" id="sharedFilesCount">Setup Required</span>
+                    </div>
+
+                    <div id="sharedFilesList" class="flex-1 overflow-y-auto space-y-2.5 pr-1">
+                        <p class="text-xs text-slate-500 text-center mt-10">Connect Firebase config to see live shared files.</p>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Convert & Download Button -->
-        <button type="button" id="convertBtn" disabled class="mt-6 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2">
-            <span id="btnText">Convert & Download</span>
-        </button>
-    </div>
+    </main>
 
+    <!-- BULK URL TO ZIP SCRIPT -->
+    <script>
+        const urlTextarea = document.getElementById('urlTextarea');
+        const urlCountBadge = document.getElementById('urlCountBadge');
+        const csvUrlInput = document.getElementById('csvUrlInput');
+        const authUser = document.getElementById('authUser');
+        const authPass = document.getElementById('authPass');
+        const startUrlDownloadBtn = document.getElementById('startUrlDownloadBtn');
+        const stopUrlDownloadBtn = document.getElementById('stopUrlDownloadBtn');
+        const urlProgressBar = document.getElementById('urlProgressBar');
+        const urlPercentLabel = document.getElementById('urlPercentLabel');
+        const statTotal = document.getElementById('statTotal');
+        const statSuccess = document.getElementById('statSuccess');
+        const statRemaining = document.getElementById('statRemaining');
+        const statFailed = document.getElementById('statFailed');
+        const urlLogBox = document.getElementById('urlLogBox');
+        const downloadUrlZipBtn = document.getElementById('downloadUrlZipBtn');
+
+        let isFetchingStopped = false;
+        let readyZipBlob = null;
+        let readyZipCount = 0;
+
+        function extractUrls(rawText) {
+            return rawText
+                .split(/[\r\n,]+/)
+                .map(u => u.trim().replace(/^["']|["']$/g, ''))
+                .filter(u => u.startsWith('http://') || u.startsWith('https://'));
+        }
+
+        function updateUrlCount() {
+            const urls = extractUrls(urlTextarea.value);
+            urlCountBadge.textContent = urls.length;
+            if (urls.length > 1000) {
+                urlCountBadge.classList.remove('text-amber-400');
+                urlCountBadge.classList.add('text-red-400');
+            } else {
+                urlCountBadge.classList.add('text-amber-400');
+                urlCountBadge.classList.remove('text-red-400');
+            }
+        }
+
+        urlTextarea.addEventListener('input', updateUrlCount);
+
+        // CSV / TXT import support (like file1.csv in your PHP script)
+        csvUrlInput.addEventListener('change', async (e) => {
+            if (!e.target.files || e.target.files.length === 0) return;
+            const text = await e.target.files[0].text();
+            const urls = extractUrls(text);
+            urlTextarea.value = urls.slice(0, 1000).join('\n');
+            updateUrlCount();
+            csvUrlInput.value = '';
+        });
+
+        function addUrlLog(msg, colorClass = 'text-slate-400') {
+            const p = document.createElement('p');
+            p.className = colorClass;
+            p.textContent = msg;
+            urlLogBox.appendChild(p);
+            urlLogBox.scrollTop = urlLogBox.scrollHeight;
+        }
+
+        function getCleanFilename(url, contentType, index) {
+            try {
+                const pathname = new URL(url).pathname;
+                let base = pathname.substring(pathname.lastIndexOf('/') + 1);
+                if (base && base.includes('.')) return decodeURIComponent(base);
+            } catch (e) {}
+
+            let ext = 'jpg';
+            if (contentType) {
+                if (contentType.includes('png')) ext = 'png';
+                else if (contentType.includes('webp')) ext = 'webp';
+                else if (contentType.includes('gif')) ext = 'gif';
+            }
+            return `image_${index + 1}.${ext}`;
+        }
+
+        stopUrlDownloadBtn.addEventListener('click', () => {
+            isFetchingStopped = true;
+            addUrlLog('Stopping after current batch...', 'text-red-400');
+        });
+
+        startUrlDownloadBtn.addEventListener('click', async () => {
+            const urls = extractUrls(urlTextarea.value);
+            if (urls.length === 0) {
+                alert('Please paste at least 1 valid image URL (starting with http:// or https://).');
+                return;
+            }
+            if (urls.length > 1000) {
+                alert(`You entered ${urls.length} URLs. Maximum allowed is 1,000 URLs at a time.`);
+                return;
+            }
+
+            isFetchingStopped = false;
+            readyZipBlob = null;
+            readyZipCount = 0;
+
+            startUrlDownloadBtn.disabled = true;
+            stopUrlDownloadBtn.classList.remove('hidden');
+            downloadUrlZipBtn.disabled = true;
+            downloadUrlZipBtn.textContent = 'Processing... Please wait';
+            urlLogBox.innerHTML = '';
+
+            const total = urls.length;
+            let completed = 0;
+            let success = 0;
+            let failed = 0;
+
+            statTotal.textContent = total;
+            statSuccess.textContent = '0';
+            statRemaining.textContent = total;
+            statFailed.textContent = '0';
+            urlProgressBar.style.width = '0%';
+            urlPercentLabel.textContent = '0%';
+
+            const zip = new JSZip();
+            const usedFilenames = new Set();
+            const username = authUser.value.trim();
+            const password = authPass.value.trim();
+
+            // Process in concurrent batches of 5 for speed without crashing server
+            const CONCURRENCY = 5;
+            let currentIndex = 0;
+
+            async function worker() {
+                while (currentIndex < total && !isFetchingStopped) {
+                    const idx = currentIndex++;
+                    const targetUrl = urls[idx];
+
+                    try {
+                        const res = await fetch('/api/fetch-image', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: targetUrl, username, password })
+                        });
+
+                        if (!res.ok) {
+                            throw new Error(`HTTP ${res.status}`);
+                        }
+
+                        const blob = await res.blob();
+                        const contentType = res.headers.get('content-type');
+                        let filename = getCleanFilename(targetUrl, contentType, idx);
+
+                        // Avoid duplicate names in ZIP
+                        let uniqueName = filename;
+                        let counter = 1;
+                        while (usedFilenames.has(uniqueName)) {
+                            const dot = filename.lastIndexOf('.');
+                            uniqueName = dot !== -1 
+                                ? `${filename.substring(0, dot)}_${counter}${filename.substring(dot)}`
+                                : `${filename}_${counter}`;
+                            counter++;
+                        }
+                        usedFilenames.add(uniqueName);
+
+                        zip.file(uniqueName, blob);
+                        success++;
+                        addUrlLog(`✓ [${idx + 1}/${total}] ${uniqueName}`, 'text-emerald-400');
+
+                    } catch (err) {
+                        failed++;
+                        addUrlLog(`✕ [${idx + 1}/${total}] Failed: ${targetUrl} (${err.message})`, 'text-red-400');
+                    } finally {
+                        completed++;
+                        const remaining = total - completed;
+                        const pct = Math.round((completed / total) * 100);
+
+                        statSuccess.textContent = success;
+                        statFailed.textContent = failed;
+                        statRemaining.textContent = remaining;
+                        urlProgressBar.style.width = `${pct}%`;
+                        urlPercentLabel.textContent = `${pct}%`;
+                    }
+                }
+            }
+
+            const workers = Array.from({ length: Math.min(CONCURRENCY, total) }, () => worker());
+            await Promise.all(workers);
+
+            stopUrlDownloadBtn.classList.add('hidden');
+            startUrlDownloadBtn.disabled = false;
+
+            if (success > 0) {
+                addUrlLog(`Packing ${success} images into ZIP...`, 'text-amber-300 font-semibold');
+                downloadUrlZipBtn.textContent = 'Creating ZIP file...';
+                readyZipBlob = await zip.generateAsync({ type: 'blob' });
+                readyZipCount = success;
+
+                downloadUrlZipBtn.disabled = false;
+                downloadUrlZipBtn.textContent = `Download ZIP (${success} Images Ready)`;
+                addUrlLog(`Done! Click "Download ZIP" below.`, 'text-emerald-300 font-bold');
+            } else {
+                downloadUrlZipBtn.textContent = 'No Images Downloaded';
+                addUrlLog('Finished with 0 successful downloads.', 'text-red-400');
+            }
+        });
+
+        downloadUrlZipBtn.addEventListener('click', () => {
+            if (!readyZipBlob) return;
+            const url = URL.createObjectURL(readyZipBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bulk_images_${readyZipCount}_${Date.now()}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        });
+    </script>
+
+    <!-- Firebase SDKs for Live File Sharing -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const shareInput = document.getElementById('shareInput');
+        const shareDropZone = document.getElementById('shareDropZone');
+        const shareSelectedName = document.getElementById('shareSelectedName');
+        const shareUploadBtn = document.getElementById('shareUploadBtn');
+        const uploadProgressWrapper = document.getElementById('uploadProgressWrapper');
+        const uploadProgressBar = document.getElementById('uploadProgressBar');
+        const uploadPercentText = document.getElementById('uploadPercentText');
+        const uploadStatusText = document.getElementById('uploadStatusText');
+        const sharedFilesList = document.getElementById('sharedFilesList');
+        const sharedFilesCount = document.getElementById('sharedFilesCount');
+
+        let fileToShare = null;
+        const MAX_SIZE_BYTES = 1024 * 1024 * 1024;
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        shareInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                const file = e.target.files[0];
+                if (file.size > MAX_SIZE_BYTES) {
+                    alert('File size 1GB thi vadhare che!');
+                    shareInput.value = '';
+                    return;
+                }
+                fileToShare = file;
+                shareSelectedName.textContent = `${file.name} (${formatBytes(file.size)})`;
+                shareSelectedName.classList.add('text-purple-400', 'font-medium');
+                shareUploadBtn.disabled = false;
+            }
+        });
+
+        if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+            const app = initializeApp(firebaseConfig);
+            const storage = getStorage(app);
+            const db = getFirestore(app);
+
+            const q = query(collection(db, "shared_files"), orderBy("createdAt", "desc"));
+            onSnapshot(q, (snapshot) => {
+                sharedFilesList.innerHTML = '';
+                sharedFilesCount.textContent = `${snapshot.size} file(s)`;
+                if (snapshot.empty) {
+                    sharedFilesList.innerHTML = '<p class="text-xs text-slate-500 text-center mt-10">No files uploaded yet.</p>';
+                    return;
+                }
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'flex items-center justify-between bg-slate-800 p-3 rounded-lg border border-slate-700/80 gap-3';
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'min-w-0 flex-1';
+                    infoDiv.innerHTML = `<p class="text-xs font-semibold text-slate-200 truncate">${data.name}</p><p class="text-[11px] text-slate-400 mt-0.5">${formatBytes(data.size)}</p>`;
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'flex items-center gap-2 shrink-0';
+                    const dlBtn = document.createElement('a');
+                    dlBtn.href = data.url; dlBtn.target = '_blank'; dlBtn.download = data.name;
+                    dlBtn.className = 'bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition';
+                    dlBtn.textContent = 'Download';
+                    const delBtn = document.createElement('button');
+                    delBtn.type = 'button'; delBtn.className = 'text-slate-400 hover:text-red-400 text-xs px-1.5 py-1'; delBtn.textContent = '✕';
+                    delBtn.onclick = async () => {
+                        if (!confirm(`Delete "${data.name}"?`)) return;
+                        if (data.storagePath) await deleteObject(ref(storage, data.storagePath));
+                        await deleteDoc(doc(db, "shared_files", docSnap.id));
+                    };
+                    actionsDiv.appendChild(dlBtn); actionsDiv.appendChild(delBtn);
+                    itemDiv.appendChild(infoDiv); itemDiv.appendChild(actionsDiv);
+                    sharedFilesList.appendChild(itemDiv);
+                });
+            });
+
+            shareUploadBtn.addEventListener('click', () => {
+                if (!fileToShare) return;
+                shareUploadBtn.disabled = true;
+                uploadProgressWrapper.classList.remove('hidden');
+                const storagePath = `shared/${Date.now()}_${fileToShare.name}`;
+                const uploadTask = uploadBytesResumable(ref(storage, storagePath), fileToShare);
+                uploadTask.on('state_changed',
+                    (s) => {
+                        const p = Math.round((s.bytesTransferred / s.totalBytes) * 100);
+                        uploadProgressBar.style.width = `${p}%`;
+                        uploadPercentText.textContent = `${p}%`;
+                    },
+                    (err) => { alert('Upload failed: ' + err.message); shareUploadBtn.disabled = false; },
+                    async () => {
+                        const url = await getDownloadURL(uploadTask.snapshot.ref);
+                        await addDoc(collection(db, "shared_files"), { name: fileToShare.name, size: fileToShare.size, url, storagePath, createdAt: serverTimestamp() });
+                        fileToShare = null; shareInput.value = '';
+                        shareSelectedName.textContent = 'Max file size: 1 GB';
+                        uploadProgressWrapper.classList.add('hidden');
+                    }
+                );
+            });
+        } else {
+            shareUploadBtn.addEventListener('click', () => alert('Pehla code ma tamaro Firebase Config paste karo!'));
+        }
+    </script>
+
+    <!-- Image & PDF Converter Scripts -->
     <script>
         const imageInput = document.getElementById('imageInput');
-        const dropZone = document.getElementById('dropZone');
         const fileListContainer = document.getElementById('fileListContainer');
         const fileList = document.getElementById('fileList');
         const fileCount = document.getElementById('fileCount');
@@ -80,30 +617,141 @@
         const qualityContainer = document.getElementById('qualityContainer');
         const convertBtn = document.getElementById('convertBtn');
         const btnText = document.getElementById('btnText');
-
         let selectedFiles = [];
 
-        // Highlight dropZone on drag
-        imageInput.addEventListener('dragenter', () => {
-            dropZone.classList.add('border-blue-500', 'bg-slate-700/70');
-        });
-
-        imageInput.addEventListener('dragleave', () => {
-            dropZone.classList.remove('border-blue-500', 'bg-slate-700/70');
-        });
-
-        imageInput.addEventListener('drop', () => {
-            dropZone.classList.remove('border-blue-500', 'bg-slate-700/70');
-        });
-
-        // Handle selected or dropped files
         imageInput.addEventListener('change', (e) => {
             if (e.target.files && e.target.files.length > 0) {
-                handleFiles(e.target.files);
-                imageInput.value = ''; // Reset for next selection
+                const valid = Array.from(e.target.files).filter(f => (f.type && f.type.startsWith('image/')) || ['.jpg','.jpeg','.png','.webp','.gif','.bmp','.avif','.jfif'].some(ext => f.name.toLowerCase().endsWith(ext)));
+                selectedFiles = [...selectedFiles, ...valid];
+                renderFileList();
+                imageInput.value = '';
             }
         });
 
-        function isValidImage(file) {
-            if (file.type && file.type.startsWith('image/')) return true;
-            const validExts =
+        function renderFileList() {
+            fileList.innerHTML = '';
+            fileCount.textContent = selectedFiles.length;
+            if (selectedFiles.length > 0) {
+                fileListContainer.classList.remove('hidden');
+                convertBtn.disabled = false;
+                btnText.textContent = selectedFiles.length === 1 ? 'Convert & Download Image' : `Convert & Download ZIP (${selectedFiles.length} images)`;
+            } else {
+                fileListContainer.classList.add('hidden');
+                convertBtn.disabled = true;
+                btnText.textContent = 'Convert & Download Images';
+            }
+            selectedFiles.forEach((file, index) => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center bg-slate-800 px-2.5 py-1.5 rounded';
+                li.innerHTML = `<span class="truncate pr-2">${index + 1}. ${file.name}</span>`;
+                const delBtn = document.createElement('button');
+                delBtn.type = 'button'; delBtn.className = 'text-slate-400 hover:text-red-400 font-bold px-1'; delBtn.textContent = '✕';
+                delBtn.onclick = () => { selectedFiles.splice(index, 1); renderFileList(); };
+                li.appendChild(delBtn); fileList.appendChild(li);
+            });
+        }
+
+        clearBtn.addEventListener('click', () => { selectedFiles = []; renderFileList(); });
+        qualitySlider.addEventListener('input', (e) => qualityValue.textContent = e.target.value);
+        formatSelect.addEventListener('change', (e) => qualityContainer.style.display = e.target.value === 'image/png' ? 'none' : 'block');
+
+        function convertImageToBlob(file, format, quality) {
+            return new Promise((resolve, reject) => {
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth || img.width;
+                    canvas.height = img.naturalHeight || img.height;
+                    const ctx = canvas.getContext('2d');
+                    if (format === 'image/jpeg') { ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+                    ctx.drawImage(img, 0, 0);
+                    URL.revokeObjectURL(url);
+                    canvas.toBlob((blob) => {
+                        if (!blob) return reject(new Error('Failed'));
+                        const ext = format.split('/')[1] === 'jpeg' ? 'jpg' : format.split('/')[1];
+                        const baseName = file.name.lastIndexOf('.') !== -1 ? file.name.substring(0, file.name.lastIndexOf('.')) : file.name;
+                        resolve({ blob, filename: `${baseName}.${ext}` });
+                    }, format, quality);
+                };
+                img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Load error')); };
+                img.src = url;
+            });
+        }
+
+        convertBtn.addEventListener('click', async () => {
+            if (selectedFiles.length === 0) return;
+            convertBtn.disabled = true;
+            btnText.textContent = `Converting ${selectedFiles.length} images...`;
+            const format = formatSelect.value;
+            const quality = qualitySlider.value / 100;
+            try {
+                if (selectedFiles.length === 1) {
+                    const { blob, filename } = await convertImageToBlob(selectedFiles[0], format, quality);
+                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+                } else {
+                    const zip = new JSZip(); const used = new Set();
+                    for (const f of selectedFiles) {
+                        let { blob, filename } = await convertImageToBlob(f, format, quality);
+                        let c = 1, uName = filename;
+                        while (used.has(uName)) { const d = filename.lastIndexOf('.'); uName = `${filename.substring(0, d)}_${c}${filename.substring(d)}`; c++; }
+                        used.add(uName); zip.file(uName, blob);
+                    }
+                    const zipBlob = await zip.generateAsync({ type: 'blob' });
+                    const a = document.createElement('a'); a.href = URL.createObjectURL(zipBlob); a.download = `converted_images_${Date.now()}.zip`; a.click();
+                }
+            } catch (e) { alert('Error converting images.'); }
+            convertBtn.disabled = false; renderFileList();
+        });
+
+        /* PDF TO EXCEL */
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        const pdfInput = document.getElementById('pdfInput');
+        const pdfFileName = document.getElementById('pdfFileName');
+        const pdfModeSelect = document.getElementById('pdfModeSelect');
+        const pdfConvertBtn = document.getElementById('pdfConvertBtn');
+        const pdfBtnText = document.getElementById('pdfBtnText');
+        let selectedPdfFile = null;
+
+        pdfInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                selectedPdfFile = e.target.files[0];
+                pdfFileName.textContent = `Selected: ${selectedPdfFile.name}`;
+                pdfFileName.classList.add('text-emerald-400', 'font-medium');
+                pdfConvertBtn.disabled = false;
+            }
+        });
+
+        pdfConvertBtn.addEventListener('click', async () => {
+            if (!selectedPdfFile) return;
+            pdfConvertBtn.disabled = true;
+            pdfBtnText.textContent = 'Reading PDF & Building Excel...';
+            try {
+                const pdf = await pdfjsLib.getDocument({ data: await selectedPdfFile.arrayBuffer() }).promise;
+                const workbook = XLSX.utils.book_new();
+                const mode = pdfModeSelect.value;
+                let allRows = [];
+                for (let p = 1; p <= pdf.numPages; p++) {
+                    const page = await pdf.getPage(p);
+                    const content = await page.getTextContent();
+                    const rowsMap = [];
+                    content.items.forEach(item => {
+                        const text = item.str.trim();
+                        if (!text) return;
+                        let row = rowsMap.find(r => Math.abs(r.y - item.transform[5]) <= 5);
+                        if (!row) { row = { y: item.transform[5], items: [] }; rowsMap.push(row); }
+                        row.items.push({ x: item.transform[4], text });
+                    });
+                    rowsMap.sort((a, b) => b.y - a.y);
+                    const pageRows = rowsMap.map(r => { r.items.sort((a, b) => a.x - b.x); return r.items.map(i => i.text); });
+                    if (mode === 'separate') XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(pageRows), `Page_${p}`);
+                    else { allRows.push(...pageRows); if (p < pdf.numPages) allRows.push([]); }
+                }
+                if (mode === 'single') XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(allRows), 'Extracted_Data');
+                XLSX.writeFile(workbook, `${selectedPdfFile.name.replace(/\.pdf$/i, '')}.xlsx`);
+            } catch (err) { alert('Error converting PDF.'); }
+            pdfConvertBtn.disabled = false; pdfBtnText.textContent = 'Convert PDF to Excel (.xlsx)';
+        });
+    </script>
+</body>
+</html>
