@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quick File & ZIP Share (1GB) - Klever</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         html { scroll-behavior: smooth; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -56,6 +53,7 @@
             </nav>
         </div>
     </header>
+
     <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-12 flex items-center">
         <div class="glass-card p-8 rounded-2xl shadow-2xl w-full border border-violet-500/30 relative overflow-hidden">
             <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500"></div>
@@ -102,7 +100,7 @@
                 <div class="bg-zinc-950/75 rounded-xl border border-zinc-800 p-4 flex flex-col h-76 min-h-[290px]">
                     <div class="flex items-center justify-between pb-3 mb-3 border-b border-zinc-800">
                         <span class="text-xs font-semibold uppercase tracking-wider text-violet-400">Available Files to Download</span>
-                        <span class="text-[11px] text-zinc-400" id="sharedFilesCount">Loading...</span>
+                        <span class="text-[11px] text-zinc-400" id="sharedFilesCount">Connecting...</span>
                     </div>
 
                     <div id="sharedFilesList" class="flex-1 overflow-y-auto space-y-2.5 pr-1">
@@ -115,7 +113,6 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -128,12 +125,16 @@
             measurementId: "G-LB8DNS6F2F"
         };
 
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         const shareInput = document.getElementById('shareInput');
         const shareSelectedName = document.getElementById('shareSelectedName');
         const shareUploadBtn = document.getElementById('shareUploadBtn');
         const uploadProgressWrapper = document.getElementById('uploadProgressWrapper');
         const uploadProgressBar = document.getElementById('uploadProgressBar');
         const uploadPercentText = document.getElementById('uploadPercentText');
+        const uploadStatusText = document.getElementById('uploadStatusText');
         const sharedFilesList = document.getElementById('sharedFilesList');
         const sharedFilesCount = document.getElementById('sharedFilesCount');
 
@@ -163,75 +164,121 @@
             }
         });
 
-        if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
-            const app = initializeApp(firebaseConfig);
-            const storage = getStorage(app);
-            const db = getFirestore(app);
-
-            const q = query(collection(db, "shared_files"), orderBy("createdAt", "desc"));
-            onSnapshot(q, (snapshot) => {
-                sharedFilesList.innerHTML = '';
-                sharedFilesCount.textContent = `${snapshot.size} file(s)`;
-                if (snapshot.empty) {
-                    sharedFilesList.innerHTML = '<p class="text-xs text-zinc-500 text-center mt-10">No files uploaded yet.</p>';
-                    return;
-                }
-                snapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'flex items-center justify-between bg-zinc-900 p-3 rounded-xl border border-zinc-800 gap-3';
-                    const infoDiv = document.createElement('div');
-                    infoDiv.className = 'min-w-0 flex-1';
-                    infoDiv.innerHTML = `<p class="text-xs font-semibold text-zinc-200 truncate">${data.name}</p><p class="text-[11px] text-zinc-400 mt-0.5">${formatBytes(data.size)}</p>`;
-                    const actionsDiv = document.createElement('div');
-                    actionsDiv.className = 'flex items-center gap-2 shrink-0';
-                    const dlBtn = document.createElement('a');
-                    dlBtn.href = data.url; dlBtn.target = '_blank'; dlBtn.download = data.name;
-                    dlBtn.className = 'bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition';
-                    dlBtn.textContent = 'Download';
-                    const delBtn = document.createElement('button');
-                    delBtn.type = 'button'; delBtn.className = 'text-zinc-400 hover:text-rose-400 text-xs px-1.5 py-1'; delBtn.textContent = '✕';
-                    delBtn.onclick = async () => {
-                        if (!confirm(`Delete "${data.name}"?`)) return;
-                        if (data.storagePath) await deleteObject(ref(storage, data.storagePath));
-                        await deleteDoc(doc(db, "shared_files", docSnap.id));
-                    };
-                    actionsDiv.appendChild(dlBtn); actionsDiv.appendChild(delBtn);
-                    itemDiv.appendChild(infoDiv); itemDiv.appendChild(actionsDiv);
-                    sharedFilesList.appendChild(itemDiv);
-                });
-            }, (error) => {
-                sharedFilesCount.textContent = 'Connection Error';
-                sharedFilesList.innerHTML = `<p class="text-xs text-rose-400 text-center mt-10">Firestore Error: ${error.message}</p>`;
+        // Listen to Firestore shared files
+        const q = query(collection(db, "shared_files"), orderBy("createdAt", "desc"));
+        onSnapshot(q, (snapshot) => {
+            sharedFilesList.innerHTML = '';
+            sharedFilesCount.textContent = `${snapshot.size} file(s)`;
+            if (snapshot.empty) {
+                sharedFilesList.innerHTML = '<p class="text-xs text-zinc-500 text-center mt-10">No files uploaded yet.</p>';
+                return;
+            }
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex items-center justify-between bg-zinc-900 p-3 rounded-xl border border-zinc-800 gap-3';
+                
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'min-w-0 flex-1';
+                infoDiv.innerHTML = `<p class="text-xs font-semibold text-zinc-200 truncate">${data.name}</p><p class="text-[11px] text-zinc-400 mt-0.5">${formatBytes(data.size)}</p>`;
+                
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'flex items-center gap-2 shrink-0';
+                
+                const dlBtn = document.createElement('a');
+                dlBtn.href = data.url;
+                dlBtn.target = '_blank';
+                dlBtn.rel = 'noopener noreferrer';
+                dlBtn.className = 'bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition';
+                dlBtn.textContent = 'Download';
+                
+                const delBtn = document.createElement('button');
+                delBtn.type = 'button';
+                delBtn.className = 'text-zinc-400 hover:text-rose-400 text-xs px-1.5 py-1';
+                delBtn.textContent = '✕';
+                delBtn.onclick = async () => {
+                    if (!confirm(`Remove "${data.name}" from list?`)) return;
+                    await deleteDoc(doc(db, "shared_files", docSnap.id));
+                };
+                
+                actionsDiv.appendChild(dlBtn);
+                actionsDiv.appendChild(delBtn);
+                itemDiv.appendChild(infoDiv);
+                itemDiv.appendChild(actionsDiv);
+                sharedFilesList.appendChild(itemDiv);
             });
+        }, (error) => {
+            sharedFilesCount.textContent = 'Firestore Setup Pending';
+            sharedFilesList.innerHTML = `<p class="text-xs text-rose-400 text-center mt-10">Pehla Firebase Console ma Firestore Database (Test Mode) enable karo!<br>(${error.message})</p>`;
+        });
 
-            shareUploadBtn.addEventListener('click', () => {
-                if (!fileToShare) return;
-                shareUploadBtn.disabled = true;
-                uploadProgressWrapper.classList.remove('hidden');
-                const storagePath = `shared/${Date.now()}_${fileToShare.name}`;
-                const uploadTask = uploadBytesResumable(ref(storage, storagePath), fileToShare);
-                uploadTask.on('state_changed',
-                    (s) => {
-                        const p = Math.round((s.bytesTransferred / s.totalBytes) * 100);
-                        uploadProgressBar.style.width = `${p}%`;
-                        uploadPercentText.textContent = `${p}%`;
-                    },
-                    (err) => { alert('Upload failed: ' + err.message); shareUploadBtn.disabled = false; },
-                    async () => {
-                        const url = await getDownloadURL(uploadTask.snapshot.ref);
-                        await addDoc(collection(db, "shared_files"), { name: fileToShare.name, size: fileToShare.size, url, storagePath, createdAt: serverTimestamp() });
-                        fileToShare = null; shareInput.value = '';
-                        shareSelectedName.textContent = 'Max file size: 1 GB';
-                        shareSelectedName.classList.remove('text-violet-400', 'font-medium');
-                        uploadProgressWrapper.classList.add('hidden');
-                        uploadProgressBar.style.width = '0%';
+        // Upload file via XMLHttpRequest with live progress
+        shareUploadBtn.addEventListener('click', () => {
+            if (!fileToShare) return;
+            shareUploadBtn.disabled = true;
+            uploadProgressWrapper.classList.remove('hidden');
+            uploadStatusText.textContent = 'Uploading...';
+            uploadProgressBar.style.width = '0%';
+            uploadPercentText.textContent = '0%';
+
+            const formData = new FormData();
+            formData.append('file', fileToShare);
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', 'https://tmpfiles.org/api/v1/upload', true);
+
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    uploadProgressBar.style.width = `${percent}%`;
+                    uploadPercentText.textContent = `${percent}%`;
+                    if (percent === 100) {
+                        uploadStatusText.textContent = 'Saving link...';
                     }
-                );
-            });
-        } else {
-            shareUploadBtn.addEventListener('click', () => alert('Pehla file-share.html ma tamaro Firebase Config paste karo!'));
-        }
+                }
+            };
+
+            xhr.onload = async () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const res = JSON.parse(xhr.responseText);
+                        if (res.status === 'success' && res.data && res.data.url) {
+                            // Convert view link to direct download link
+                            const directUrl = res.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+                            await addDoc(collection(db, "shared_files"), {
+                                name: fileToShare.name,
+                                size: fileToShare.size,
+                                url: directUrl,
+                                createdAt: serverTimestamp()
+                            });
+                            fileToShare = null;
+                            shareInput.value = '';
+                            shareSelectedName.textContent = 'Max file size: 1 GB';
+                            shareSelectedName.classList.remove('text-violet-400', 'font-medium');
+                            uploadProgressWrapper.classList.add('hidden');
+                        } else {
+                            throw new Error('Invalid server response');
+                        }
+                    } catch (err) {
+                        alert('Error saving file: ' + err.message);
+                        shareUploadBtn.disabled = false;
+                        uploadProgressWrapper.classList.add('hidden');
+                    }
+                } else {
+                    alert('Upload failed (Status: ' + xhr.status + ')');
+                    shareUploadBtn.disabled = false;
+                    uploadProgressWrapper.classList.add('hidden');
+                }
+            };
+
+            xhr.onerror = () => {
+                alert('Network error during upload. Please try again.');
+                shareUploadBtn.disabled = false;
+                uploadProgressWrapper.classList.add('hidden');
+            };
+
+            xhr.send(formData);
+        });
     </script>
 </body>
 </html>
