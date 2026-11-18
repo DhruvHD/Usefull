@@ -3,30 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fast Image Converter</title>
+    <title>Bulk Image Format Converter</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- JSZip library for bulk ZIP download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body class="bg-slate-900 text-white min-h-screen flex items-center justify-center p-4">
 
-    <div class="bg-slate-800 p-8 rounded-2xl shadow-xl max-w-md w-full border border-slate-700">
-        <h1 class="text-2xl font-bold mb-2 text-center text-blue-400">Image Format Converter</h1>
-        <p class="text-slate-400 text-sm text-center mb-6">100% Private • Instant Browser Conversion</p>
+    <div class="bg-slate-800 p-8 rounded-2xl shadow-xl max-w-lg w-full border border-slate-700">
+        <h1 class="text-2xl font-bold mb-1 text-center text-blue-400">Bulk Image Converter</h1>
+        <p class="text-slate-400 text-sm text-center mb-6">100% Private • Convert & Download as ZIP</p>
 
-        <!-- File Upload Area -->
-        <label class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-slate-600 rounded-xl cursor-pointer hover:border-blue-500 hover:bg-slate-700/50 transition">
-            <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                <p class="mb-2 text-sm text-slate-300"><span class="font-semibold">Click to upload</span> or drag & drop</p>
-                <p class="text-xs text-slate-500" id="file-name">PNG, JPG, WEBP, GIF, BMP</p>
+        <!-- Drag & Drop / File Upload Area -->
+        <label id="dropZone" class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-slate-600 rounded-xl cursor-pointer hover:border-blue-500 hover:bg-slate-700/50 transition">
+            <div class="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
+                <p class="mb-1 text-sm text-slate-300"><span class="font-semibold text-blue-400">Click to upload</span> or drag & drop multiple images</p>
+                <p class="text-xs text-slate-500">PNG, JPG, WEBP, GIF, BMP supported</p>
             </div>
-            <input id="imageInput" type="file" accept="image/*" class="hidden" />
+            <input id="imageInput" type="file" accept="image/*" multiple class="hidden" />
         </label>
+
+        <!-- Selected Files List -->
+        <div id="fileListContainer" class="hidden mt-4">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Selected Files (<span id="fileCount">0</span>)</span>
+                <button id="clearBtn" class="text-xs text-red-400 hover:text-red-300">Clear All</button>
+            </div>
+            <ul id="fileList" class="max-h-36 overflow-y-auto space-y-1.5 bg-slate-900/60 p-3 rounded-lg border border-slate-700 text-xs text-slate-300">
+                <!-- File names will appear here -->
+            </ul>
+        </div>
 
         <!-- Format & Quality Selection -->
         <div class="mt-6 space-y-4">
             <div>
-                <label class="block text-sm font-medium text-slate-300 mb-1">Convert To Format:</label>
+                <label class="block text-sm font-medium text-slate-300 mb-1">Convert All To:</label>
                 <select id="formatSelect" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2.5 text-white focus:ring-blue-500 focus:border-blue-500">
-                    <option value="image/webp">WEBP (Best for Web)</option>
+                    <option value="image/webp">WEBP (Best for Web / E-commerce)</option>
                     <option value="image/jpeg">JPG / JPEG</option>
                     <option value="image/png">PNG (Transparent)</option>
                 </select>
@@ -41,82 +54,103 @@
         </div>
 
         <!-- Convert & Download Button -->
-        <button id="convertBtn" disabled class="mt-6 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl transition">
-            Convert & Download
+        <button id="convertBtn" disabled class="mt-6 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2">
+            <span id="btnText">Convert & Download</span>
         </button>
     </div>
 
-    <canvas id="canvas" class="hidden"></canvas>
-
     <script>
         const imageInput = document.getElementById('imageInput');
-        const fileNameDisplay = document.getElementById('file-name');
+        const dropZone = document.getElementById('dropZone');
+        const fileListContainer = document.getElementById('fileListContainer');
+        const fileList = document.getElementById('fileList');
+        const fileCount = document.getElementById('fileCount');
+        const clearBtn = document.getElementById('clearBtn');
         const formatSelect = document.getElementById('formatSelect');
         const qualitySlider = document.getElementById('qualitySlider');
         const qualityValue = document.getElementById('qualityValue');
         const qualityContainer = document.getElementById('qualityContainer');
         const convertBtn = document.getElementById('convertBtn');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+        const btnText = document.getElementById('btnText');
 
-        let selectedFile = null;
+        let selectedFiles = [];
 
-        // File select thay tyare
-        imageInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                selectedFile = e.target.files[0];
-                fileNameDisplay.textContent = selectedFile.name;
-                fileNameDisplay.classList.add('text-blue-400');
+        // Update UI with selected files
+        function handleFiles(files) {
+            const validImages = Array.from(files).filter(file => file.type.startsWith('image/'));
+            if (validImages.length === 0) return;
+
+            selectedFiles = [...selectedFiles, ...validImages];
+            renderFileList();
+        }
+
+        function renderFileList() {
+            fileList.innerHTML = '';
+            fileCount.textContent = selectedFiles.length;
+
+            if (selectedFiles.length > 0) {
+                fileListContainer.classList.remove('hidden');
                 convertBtn.disabled = false;
+                btnText.textContent = selectedFiles.length === 1 
+                    ? 'Convert & Download Image' 
+                    : `Convert & Download ZIP (${selectedFiles.length} images)`;
+            } else {
+                fileListContainer.classList.add('hidden');
+                convertBtn.disabled = true;
+                btnText.textContent = 'Convert & Download';
             }
+
+            selectedFiles.forEach((file, index) => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center bg-slate-800 px-2.5 py-1.5 rounded';
+                li.innerHTML = `
+                    <span class="truncate pr-2">${file.name}</span>
+                    <button onclick="removeFile(${index})" class="text-slate-400 hover:text-red-400 font-bold">✕</button>
+                `;
+                fileList.appendChild(li);
+            });
+        }
+
+        window.removeFile = (index) => {
+            selectedFiles.splice(index, 1);
+            renderFileList();
+        };
+
+        clearBtn.addEventListener('click', () => {
+            selectedFiles = [];
+            imageInput.value = '';
+            renderFileList();
         });
 
-        // Quality slider update
+        // File Input Change
+        imageInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        // Drag and Drop Support
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-blue-500', 'bg-slate-700/50');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-blue-500', 'bg-slate-700/50');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-blue-500', 'bg-slate-700/50');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // Quality Slider
         qualitySlider.addEventListener('input', (e) => {
             qualityValue.textContent = e.target.value;
         });
 
-        // PNG ma quality slider ni jarur nathi
         formatSelect.addEventListener('change', (e) => {
             qualityContainer.style.display = e.target.value === 'image/png' ? 'none' : 'block';
         });
 
-        // Conversion logic
-        convertBtn.addEventListener('click', () => {
-            if (!selectedFile) return;
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const img = new Image();
-                img.onload = () => {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-
-                    // JPG mate white background set karvu (transparent image black na thay etle)
-                    if (formatSelect.value === 'image/jpeg') {
-                        ctx.fillStyle = '#FFFFFF';
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    }
-
-                    ctx.drawImage(img, 0, 0);
-
-                    const format = formatSelect.value;
-                    const quality = qualitySlider.value / 100;
-                    const dataUrl = canvas.toDataURL(format, quality);
-
-                    // File download karava mate
-                    const ext = format.split('/')[1];
-                    const originalName = selectedFile.name.substring(0, selectedFile.name.lastIndexOf('.')) || selectedFile.name;
-                    
-                    const link = document.createElement('a');
-                    link.download = `${originalName}.${ext}`;
-                    link.href = dataUrl;
-                    link.click();
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(selectedFile);
-        });
-    </script>
-</body>
-</html>
+        // Helper function to convert a single file to Blob
+        function convertImageToBlob(file, format, quality)
