@@ -1,80 +1,3 @@
-<?php
-// ==========================================
-// BACKEND PHP OCR & IMAGE UPLOAD HANDLER
-// ==========================================
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
-    header('Content-Type: application/json');
-
-    if ($_FILES['image']['error'] !== UPLOAD_ERR_OK) {
-        echo json_encode(['status' => 'error', 'message' => 'Image upload failed. Please select a valid image.']);
-        exit;
-    }
-
-    // Server par 'uploads' folder banavo ane image save karo
-    $uploadDir = __DIR__ . '/uploads/';
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
-    }
-
-    $allowedExt = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-    $originalName = $_FILES['image']['name'];
-    $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-
-    if (!in_array($ext, $allowedExt)) {
-        echo json_encode(['status' => 'error', 'message' => 'Only JPG, PNG, WEBP images are allowed.']);
-        exit;
-    }
-
-    $newFileName = 'ocr_' . time() . '_' . rand(1000, 9999) . '.' . $ext;
-    $savedFilePath = $uploadDir . $newFileName;
-
-    if (!move_uploaded_file($_FILES['image']['tmp_name'], $savedFilePath)) {
-        echo json_encode(['status' => 'error', 'message' => 'Server par image save thai shakyu nathi.']);
-        exit;
-    }
-
-    // OCR.space API thi text extract karo
-    $apiKey = 'TAMARI_API_KEY_AHIYA_MUKO'; // https://ocr.space/ocrapi parthi free key muko
-    $language = isset($_POST['language']) ? $_POST['language'] : 'eng';
-
-    $curl = curl_init();
-    curl_setopt_array($curl, [
-        CURLOPT_URL => 'https://api.ocr.space/parse/image',
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => [
-            'apikey' => $apiKey,
-            'language' => $language,
-            'isOverlayRequired' => 'false',
-            'OCREngine' => '2',
-            'file' => new CURLFile($savedFilePath, mime_content_type($savedFilePath), $newFileName)
-        ],
-    ]);
-
-    $response = curl_exec($curl);
-    $curlError = curl_error($curl);
-    curl_close($curl);
-
-    if ($curlError) {
-        echo json_encode(['status' => 'error', 'message' => 'CURL Error: ' . $curlError]);
-        exit;
-    }
-
-    $result = json_decode($response, true);
-
-    if (isset($result['ParsedResults'][0]['ParsedText'])) {
-        echo json_encode([
-            'status' => 'success',
-            'image_url' => 'uploads/' . $newFileName,
-            'text' => $result['ParsedResults'][0]['ParsedText']
-        ]);
-    } else {
-        $errorMsg = $result['ErrorMessage'][0] ?? 'Text extract thai shakyu nathi. API key check karo.';
-        echo json_encode(['status' => 'error', 'message' => $errorMsg]);
-    }
-    exit;
-}
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -82,6 +5,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image to Text (OCR) - Klever</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tesseract.js OCR Library (Runs directly in browser on Vercel) -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         html { scroll-behavior: smooth; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -162,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
                                     </svg>
                                 </div>
                                 <p class="text-sm text-zinc-200"><span class="font-semibold text-violet-400">Click to select Image</span>, drag & drop, or paste</p>
-                                <p class="text-xs text-zinc-500 mt-1">Supports JPG, PNG, WEBP (Max 5MB)</p>
+                                <p class="text-xs text-zinc-500 mt-1">Supports JPG, PNG, WEBP, BMP</p>
                             </div>
 
                             <!-- Image Preview -->
@@ -183,10 +108,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
                         </div>
                     </div>
 
-                    <!-- Live Upload Progress Bar -->
+                    <!-- Live OCR Progress Bar -->
                     <div id="ocrProgressWrapper" class="hidden mt-4">
                         <div class="flex justify-between text-xs text-zinc-300 mb-1">
-                            <span id="ocrStatusText">Uploading image...</span>
+                            <span id="ocrStatusText">Initializing OCR...</span>
                             <span id="ocrPercentText">0%</span>
                         </div>
                         <div class="w-full bg-zinc-800 rounded-full h-2.5 overflow-hidden">
@@ -195,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
                     </div>
 
                     <button type="button" id="extractBtn" disabled class="mt-4 w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed text-white text-sm font-bold py-3.5 px-4 rounded-xl transition shadow-lg shadow-violet-500/20 disabled:shadow-none">
-                        Upload & Extract Text
+                        Extract Text from Image
                     </button>
                 </div>
 
@@ -216,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
                         </div>
                     </div>
 
-                    <textarea id="extractedTextArea" readonly placeholder="Extracted text will appear here after uploading..." class="flex-1 w-full bg-transparent text-xs sm:text-sm text-zinc-200 placeholder-zinc-600 resize-none focus:outline-none leading-relaxed"></textarea>
+                    <textarea id="extractedTextArea" readonly placeholder="Extracted text will appear here after scanning..." class="flex-1 w-full bg-transparent text-xs sm:text-sm text-zinc-200 placeholder-zinc-600 resize-none focus:outline-none leading-relaxed"></textarea>
                 </div>
             </div>
         </div>
@@ -244,10 +169,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
         function setSelectedImage(file) {
             if (!file || !file.type.startsWith('image/')) {
                 alert('Please select a valid image file (JPG, PNG, WEBP).');
-                return;
-            }
-            if (file.size > 5 * 1024 * 1024) {
-                alert('Image size 5MB thi ochhi hovi joiye!');
                 return;
             }
 
@@ -303,65 +224,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
             }
         });
 
-        // Upload & Extract to same file
-        extractBtn.addEventListener('click', () => {
+        // Run Tesseract OCR directly in Browser
+        extractBtn.addEventListener('click', async () => {
             if (!selectedImageFile) return;
 
             extractBtn.disabled = true;
             ocrProgressWrapper.classList.remove('hidden');
-            ocrStatusText.textContent = 'Uploading image...';
+            ocrStatusText.textContent = 'Loading OCR Engine...';
             ocrPercentText.textContent = '0%';
             ocrProgressBar.style.width = '0%';
             extractedTextArea.value = '';
             copyTextBtn.disabled = true;
 
-            const formData = new FormData();
-            formData.append('image', selectedImageFile);
-            formData.append('language', ocrLanguage.value);
-
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', window.location.href, true);
-
-            xhr.upload.onprogress = (e) => {
-                if (e.lengthComputable) {
-                    const percent = Math.round((e.loaded / e.total) * 100);
-                    ocrProgressBar.style.width = `${percent}%`;
-                    ocrPercentText.textContent = `${percent}%`;
-                    if (percent === 100) {
-                        ocrStatusText.textContent = 'Scanning text from image...';
-                    }
-                }
-            };
-
-            xhr.onload = () => {
-                extractBtn.disabled = false;
-                ocrProgressWrapper.classList.add('hidden');
-
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    try {
-                        const data = JSON.parse(xhr.responseText);
-                        if (data.status === 'success') {
-                            extractedTextArea.value = data.text.trim() || 'No readable text found in this image.';
-                            extractedTextArea.removeAttribute('readonly');
-                            copyTextBtn.disabled = false;
+            try {
+                const lang = ocrLanguage.value;
+                const worker = await Tesseract.createWorker(lang, 1, {
+                    logger: (m) => {
+                        if (m.status === 'recognizing text') {
+                            const percent = Math.round(m.progress * 100);
+                            ocrStatusText.textContent = 'Extracting text...';
+                            ocrPercentText.textContent = `${percent}%`;
+                            ocrProgressBar.style.width = `${percent}%`;
                         } else {
-                            alert('Error: ' + (data.message || 'Text extract thai shakyu nathi.'));
+                            ocrStatusText.textContent = m.status.charAt(0).toUpperCase() + m.status.slice(1) + '...';
                         }
-                    } catch (err) {
-                        alert('Invalid response from server. Check that PHP is enabled for .html files or rename to .php');
                     }
-                } else {
-                    alert('Upload failed (Status: ' + xhr.status + ')');
-                }
-            };
+                });
 
-            xhr.onerror = () => {
+                const { data: { text } } = await worker.recognize(selectedImageFile);
+                await worker.terminate();
+
+                extractedTextArea.value = text.trim() || 'No readable text found in this image.';
+                extractedTextArea.removeAttribute('readonly');
+                copyTextBtn.disabled = false;
+            } catch (error) {
+                alert('OCR Error: ' + error.message);
+            } finally {
                 extractBtn.disabled = false;
                 ocrProgressWrapper.classList.add('hidden');
-                alert('Network error during upload.');
-            };
-
-            xhr.send(formData);
+            }
         });
 
         // Copy Text Button
