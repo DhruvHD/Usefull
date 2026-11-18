@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Image Rename via CSV - MyTools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        html { scroll-behavior: smooth; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body {
+            background-color: #09090b;
+            background-image: linear-gradient(rgba(9, 9, 11, 0.72), rgba(9, 9, 11, 0.82)), url('https://img.magnific.com/premium-photo/minimalist-workspace-featuring-computer-chair-books-ideal-coding-study_570250-4567.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        .glass-card {
+            background: rgba(18, 18, 23, 0.76);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+    </style>
+</head>
+<body class="text-zinc-100 min-h-screen flex flex-col">
+    <!-- Header / Navigation Bar -->
+    <header class="w-full bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/80 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2.5 text-lg font-extrabold tracking-tight">
+                <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 via-amber-500 to-violet-600 flex items-center justify-center text-white shadow-lg shadow-rose-500/20">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </span>
+                <span class="bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">MyTools</span>
+            </a>
+
+            <nav class="flex items-center gap-3 sm:gap-5 text-xs sm:text-sm font-semibold text-zinc-400">
+                <a href="index.html" class="hover:text-white transition">Home</a>
+                <a href="image-converter.html" class="hidden md:inline hover:text-white transition">Image Converter</a>
+                <a href="pdf-to-excel.html" class="hidden md:inline hover:text-white transition">PDF to Excel</a>
+                <a href="bulk-rename.html" class="hidden lg:inline text-white font-bold text-fuchsia-400">Bulk Rename</a>
+                <a href="url-downloader.html" class="hidden lg:inline hover:text-white transition">URL to ZIP</a>
+                <a href="file-share.html" class="hidden sm:inline hover:text-white transition">File Share</a>
+                <a href="https://tyrescart-scrapping.klever.ae/tcsadmin/files" target="_blank" rel="noopener noreferrer" class="bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white px-4 py-2 rounded-xl transition font-bold shadow-lg shadow-rose-500/25 flex items-center gap-1.5">
+                    <span>Data scraping</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                </a>
+            </nav>
+        </div>
+    </header>
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-12 flex items-center">
+        <div class="glass-card p-8 rounded-2xl shadow-2xl w-full border border-fuchsia-500/30 relative overflow-hidden">
+            <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-fuchsia-500 via-purple-500 to-pink-500"></div>
+            <div class="flex items-center justify-between mb-4">
+                <a href="index.html" class="text-xs text-zinc-400 hover:text-white transition">← Back to Home</a>
+                <span class="text-[11px] font-semibold text-fuchsia-400 bg-fuchsia-500/10 px-2.5 py-0.5 rounded-full">CSV Batch Renamer</span>
+            </div>
+            <div class="flex items-center justify-center gap-2 mb-1">
+                <span class="w-2.5 h-2.5 rounded-full bg-fuchsia-500"></span>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-fuchsia-400 to-pink-300 bg-clip-text text-transparent">Bulk Image Rename via CSV</h1>
+            </div>
+            <p class="text-zinc-400 text-xs text-center mb-6">Upload Multiple Images + rename.csv (Old Name, New Base Name) • Preserves Extension & Downloads ZIP</p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <span class="text-xs font-semibold text-zinc-300 uppercase tracking-wider">1. Select Images (<span id="renameImgCount" class="text-fuchsia-400">0</span>)</span>
+                            <button type="button" id="clearRenameImgsBtn" class="hidden text-xs text-rose-400 hover:text-rose-300">Clear Images</button>
+                        </div>
+                        <div id="renameImgDropZone" class="relative flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-zinc-700 rounded-xl hover:border-fuchsia-500 hover:bg-fuchsia-500/5 transition overflow-hidden">
+                            <input id="renameImgInput" type="file" accept="image/*,.webp,.avif,.jfif,.png,.jpg,.jpeg" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                            <div class="text-center px-4 pointer-events-none">
+                                <p class="text-sm text-zinc-200"><span class="font-semibold text-fuchsia-400">Click to select images</span> or drag & drop</p>
+                                <p class="text-[11px] text-zinc-500 mt-0.5" id="renameImgStatus">Select all images from your folder</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <span class="text-xs font-semibold text-zinc-300 uppercase tracking-wider">2. Upload rename.csv</span>
+                            <button type="button" id="downloadSampleCsvBtn" class="text-xs text-fuchsia-400 hover:text-fuchsia-300 underline font-medium">Download Sample CSV</button>
+                        </div>
+                        <div id="renameCsvDropZone" class="relative flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-zinc-700 rounded-xl hover:border-fuchsia-500 hover:bg-fuchsia-500/5 transition overflow-hidden">
+                            <input id="renameCsvInput" type="file" accept=".csv,text/csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                            <div class="text-center px-4 pointer-events-none">
+                                <p class="text-sm text-zinc-200"><span class="font-semibold text-fuchsia-400">Click to upload rename.csv</span></p>
+                                <p class="text-[11px] text-zinc-500 mt-0.5" id="renameCsvStatus">Col 1: Old Name (e.g. img1.jpg) • Col 2: New Name (without extension)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 text-xs text-zinc-300">
+                        <input id="skipCsvHeader" type="checkbox" checked class="accent-fuchsia-500 w-4 h-4 rounded" />
+                        <label for="skipCsvHeader">Skip first row (CSV Header row)</label>
+                    </div>
+
+                    <button type="button" id="startRenameBtn" disabled class="w-full bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-700 hover:to-pink-700 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed text-white text-sm font-bold py-3.5 px-4 rounded-xl transition shadow-lg shadow-fuchsia-500/20 disabled:shadow-none">
+                        Rename Images & Build ZIP
+                    </button>
+                </div>
+
+                <div class="bg-zinc-950/75 rounded-xl border border-zinc-800 p-5 flex flex-col justify-between h-full min-h-[320px]">
+                    <div>
+                        <div class="flex items-center justify-between pb-3 mb-4 border-b border-zinc-800">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-fuchsia-400">Live Rename Progress</span>
+                            <span id="renamePercentLabel" class="text-sm font-bold text-white">0%</span>
+                        </div>
+
+                        <div class="w-full bg-zinc-800 rounded-full h-3.5 overflow-hidden mb-4">
+                            <div id="renameProgressBar" class="bg-gradient-to-r from-fuchsia-500 to-pink-500 h-3.5 rounded-full transition-all duration-200" style="width: 0%"></div>
+                        </div>
+
+                        <div class="grid grid-cols-4 gap-2 text-center mb-4">
+                            <div class="bg-zinc-900 p-2 rounded-lg border border-zinc-800">
+                                <p class="text-[10px] text-zinc-400 uppercase">CSV Rows</p>
+                                <p id="renStatTotal" class="text-sm font-bold text-white">0</p>
+                            </div>
+                            <div class="bg-zinc-900 p-2 rounded-lg border border-zinc-800">
+                                <p class="text-[10px] text-emerald-400 uppercase">Renamed</p>
+                                <p id="renStatSuccess" class="text-sm font-bold text-emerald-400">0</p>
+                            </div>
+                            <div class="bg-zinc-900 p-2 rounded-lg border border-zinc-800">
+                                <p class="text-[10px] text-amber-400 uppercase">Exists/Skip</p>
+                                <p id="renStatSkipped" class="text-sm font-bold text-amber-400">0</p>
+                            </div>
+                            <div class="bg-zinc-900 p-2 rounded-lg border border-zinc-800">
+                                <p class="text-[10px] text-rose-400 uppercase">Not Found</p>
+                                <p id="renStatMissing" class="text-sm font-bold text-rose-400">0</p>
+                            </div>
+                        </div>
+
+                        <div id="renameLogBox" class="bg-black/60 border border-zinc-800/80 rounded-lg p-3 h-40 overflow-y-auto font-mono text-[11px] text-zinc-400 space-y-1">
+                            <p>Ready. Upload images + rename.csv on the left.</p>
+                        </div>
+                    </div>
+
+                    <button type="button" id="downloadRenamedZipBtn" disabled class="mt-4 w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed text-white text-sm font-bold py-3.5 px-4 rounded-xl transition">
+                        Download Renamed ZIP (0 Files Ready)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const renameImgInput = document.getElementById('renameImgInput');
+        const renameImgDropZone = document.getElementById('renameImgDropZone');
+        const renameImgCount = document.getElementById('renameImgCount');
+        const renameImgStatus = document.getElementById('renameImgStatus');
+        const clearRenameImgsBtn = document.getElementById('clearRenameImgsBtn');
+        const renameCsvInput = document.getElementById('renameCsvInput');
+        const renameCsvDropZone = document.getElementById('renameCsvDropZone');
+        const renameCsvStatus = document.getElementById('renameCsvStatus');
+        const downloadSampleCsvBtn = document.getElementById('downloadSampleCsvBtn');
+        const skipCsvHeader = document.getElementById('skipCsvHeader');
+        const startRenameBtn = document.getElementById('startRenameBtn');
+        const renamePercentLabel = document.getElementById('renamePercentLabel');
+        const renameProgressBar = document.getElementById('renameProgressBar');
+        const renStatTotal = document.getElementById('renStatTotal');
+        const renStatSuccess = document.getElementById('renStatSuccess');
+        const renStatSkipped = document.getElementById('renStatSkipped');
+        const renStatMissing = document.getElementById('renStatMissing');
+        const renameLogBox = document.getElementById('renameLogBox');
+        const downloadRenamedZipBtn = document.getElementById('downloadRenamedZipBtn');
+
+        let renameImageFilesMap = new Map();
+        let renameCsvRows = [];
+        let renamedZipBlob = null;
+        let renamedZipCount = 0;
+
+        function checkRenameReady() {
+            startRenameBtn.disabled = !(renameImageFilesMap.size > 0 && renameCsvRows.length > 0);
+        }
+
+        function addRenameLog(msg, colorClass = 'text-zinc-400') {
+            const p = document.createElement('p');
+            p.className = colorClass;
+            p.textContent = msg;
+            renameLogBox.appendChild(p);
+            renameLogBox.scrollTop = renameLogBox.scrollHeight;
+        }
+
+        downloadSampleCsvBtn.addEventListener('click', () => {
+            const sample = "old_name,new_base_name\nIMG_001.jpg,michelin-pilot-sport-4\nIMG_002.png,bridgestone-turanza-t005\n";
+            const blob = new Blob([sample], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'rename_sample.csv';
+            a.click();
+        });
+
+        renameImgInput.addEventListener('change', (e) => {
+            if (!e.target.files || e.target.files.length === 0) return;
+            Array.from(e.target.files).forEach(file => renameImageFilesMap.set(file.name.trim(), file));
+            renameImgCount.textContent = renameImageFilesMap.size;
+            renameImgStatus.textContent = `${renameImageFilesMap.size} image(s) loaded`;
+            renameImgStatus.classList.add('text-fuchsia-400', 'font-medium');
+            clearRenameImgsBtn.classList.remove('hidden');
+            renameImgInput.value = '';
+            checkRenameReady();
+        });
+
+        clearRenameImgsBtn.addEventListener('click', () => {
+            renameImageFilesMap.clear();
+            renameImgCount.textContent = '0';
+            renameImgStatus.textContent = 'Select all images from your folder';
+            renameImgStatus.classList.remove('text-fuchsia-400', 'font-medium');
+            clearRenameImgsBtn.classList.add('hidden');
+            checkRenameReady();
+        });
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '', inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') inQuotes = !inQuotes;
+                else if (char === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+                else current += char;
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        renameCsvInput.addEventListener('change', async (e) => {
+            if (!e.target.files || e.target.files.length === 0) return;
+            const file = e.target.files[0];
+            const text = await file.text();
+            const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+            renameCsvRows = lines.map(parseCSVLine);
+            renameCsvStatus.textContent = `Loaded: ${file.name} (${renameCsvRows.length} rows)`;
+            renameCsvStatus.classList.add('text-fuchsia-400', 'font-medium');
+            renameCsvInput.value = '';
+            checkRenameReady();
+        });
+
+        startRenameBtn.addEventListener('click', async () => {
+            if (renameImageFilesMap.size === 0 || renameCsvRows.length === 0) return;
+            startRenameBtn.disabled = true;
+            downloadRenamedZipBtn.disabled = true;
+            downloadRenamedZipBtn.textContent = 'Processing...';
+            renameLogBox.innerHTML = '';
+            renamedZipBlob = null;
+            renamedZipCount = 0;
+
+            const rowsToProcess = skipCsvHeader.checked ? renameCsvRows.slice(1) : renameCsvRows;
+            const total = rowsToProcess.length;
+            let success = 0, skipped = 0, missing = 0;
+
+            renStatTotal.textContent = total;
+            renStatSuccess.textContent = '0';
+            renStatSkipped.textContent = '0';
+            renStatMissing.textContent = '0';
+            renameProgressBar.style.width = '0%';
+            renamePercentLabel.textContent = '0%';
+
+            const zip = new JSZip();
+            const usedNewNames = new Set();
+
+            for (let i = 0; i < total; i++) {
+                const cols = rowsToProcess[i];
+                const oldName = (cols[0] || '').trim();
+                const newBaseName = (cols[1] || '').trim();
+
+                if (!oldName || !newBaseName) {
+                    skipped++;
+                    addRenameLog(`⚠ Row ${i + 1}: Empty old or new name`, 'text-amber-400');
+                } else {
+                    const fileObj = renameImageFilesMap.get(oldName);
+                    if (!fileObj) {
+                        missing++;
+                        addRenameLog(`❌ File not found: ${oldName}`, 'text-rose-400');
+                    } else {
+                        const lastDot = oldName.lastIndexOf('.');
+                        const extension = lastDot !== -1 ? oldName.substring(lastDot) : '';
+                        const newName = newBaseName + extension;
+
+                        if (usedNewNames.has(newName)) {
+                            skipped++;
+                            addRenameLog(`⚠ Already exists: ${newName}`, 'text-amber-400');
+                        } else {
+                            usedNewNames.add(newName);
+                            zip.file(newName, fileObj);
+                            success++;
+                            addRenameLog(`✅ Renamed: ${oldName} → ${newName}`, 'text-emerald-400');
+                        }
+                    }
+                }
+
+                const pct = Math.round(((i + 1) / total) * 100);
+                renStatSuccess.textContent = success;
+                renStatSkipped.textContent = skipped;
+                renStatMissing.textContent = missing;
+                renameProgressBar.style.width = `${pct}%`;
+                renamePercentLabel.textContent = `${pct}%`;
+                if (i % 50 === 0) await new Promise(r => setTimeout(r, 0));
+            }
+
+            startRenameBtn.disabled = false;
+
+            if (success > 0) {
+                addRenameLog(`Packing ${success} renamed images into ZIP...`, 'text-fuchsia-300 font-semibold');
+                downloadRenamedZipBtn.textContent = 'Creating ZIP file...';
+                renamedZipBlob = await zip.generateAsync({ type: 'blob' });
+                renamedZipCount = success;
+                downloadRenamedZipBtn.disabled = false;
+                downloadRenamedZipBtn.textContent = `Download Renamed ZIP (${success} Files Ready)`;
+                addRenameLog(`Done! Click "Download Renamed ZIP" below.`, 'text-emerald-300 font-bold');
+            } else {
+                downloadRenamedZipBtn.textContent = 'No Files Renamed';
+                addRenameLog('Finished with 0 renamed files. Check filenames in CSV.', 'text-rose-400');
+            }
+        });
+
+        downloadRenamedZipBtn.addEventListener('click', () => {
+            if (!renamedZipBlob) return;
+            const url = URL.createObjectURL(renamedZipBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `renamed_images_${renamedZipCount}_${Date.now()}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        });
+    </script>
+</body>
+</html>
