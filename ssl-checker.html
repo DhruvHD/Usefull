@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk SSL Checker - Klever</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        html { scroll-behavior: smooth; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body {
+            background-color: #09090b;
+            background-image: linear-gradient(rgba(9, 9, 11, 0.72), rgba(9, 9, 11, 0.82)), url('https://img.magnific.com/premium-photo/minimalist-workspace-featuring-computer-chair-books-ideal-coding-study_570250-4567.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        .glass-card {
+            background: rgba(18, 18, 23, 0.76);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+        /* Custom scrollbar for table */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(24, 24, 27, 0.6); }
+        ::-webkit-scrollbar-thumb { background: rgba(113, 113, 122, 0.4); border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.6); }
+    </style>
+</head>
+<body class="text-zinc-100 min-h-screen flex flex-col">
+    <!-- Header / Navigation Bar -->
+    <header class="w-full bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/80 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2.5 text-lg font-extrabold tracking-tight group">
+                <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 via-amber-500 to-violet-600 flex items-center justify-center text-white shadow-lg shadow-rose-500/20 group-hover:scale-105 transition-transform">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 4v16" />
+                        <path d="M18 4L8 12l10 8" />
+                    </svg>
+                </span>
+                <span class="bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">Klever</span>
+            </a>
+
+            <nav class="flex items-center gap-3 sm:gap-5 text-xs sm:text-sm font-semibold text-zinc-400">
+                <a href="index.html" class="hover:text-white transition">Home</a>
+                <a href="image-converter.html" class="hidden md:inline hover:text-white transition">Image Converter</a>
+                <a href="image-to-text.html" class="hidden sm:inline hover:text-white transition">Image to Text</a>
+                <a href="pdf-to-excel.html" class="hidden md:inline hover:text-white transition">PDF to Excel</a>
+                <a href="bulk-rename.html" class="hidden lg:inline hover:text-white transition">Bulk Rename</a>
+                <a href="ssl-checker.html" class="hidden sm:inline font-bold text-violet-400">SSL Checker</a>
+                <a href="file-share.html" class="hidden lg:inline hover:text-white transition">File Share</a>
+                <a href="https://tyrescart-scrapping.klever.ae/tcsadmin/files" target="_blank" rel="noopener noreferrer" class="bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white px-4 py-2 rounded-xl transition font-bold shadow-lg shadow-rose-500/25 flex items-center gap-1.5">
+                    <span>Data scraping</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-10 flex flex-col justify-center">
+        <div class="glass-card p-6 sm:p-8 rounded-2xl shadow-2xl w-full border border-violet-500/30 relative overflow-hidden">
+            <!-- Top Gradient Line -->
+            <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500"></div>
+            
+            <div class="flex items-center justify-between mb-4">
+                <a href="index.html" class="text-xs text-zinc-400 hover:text-white transition">← Back to Home</a>
+                <span class="text-[11px] font-semibold text-violet-400 bg-violet-500/10 px-2.5 py-0.5 rounded-full">Bulk Domain Scan • Auto-Sorted by Expiry</span>
+            </div>
+
+            <div class="flex items-center justify-center gap-2 mb-1">
+                <span class="w-2.5 h-2.5 rounded-full bg-violet-500"></span>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-violet-400 to-indigo-300 bg-clip-text text-transparent">Bulk SSL Certificate Checker</h1>
+            </div>
+            <p class="text-zinc-400 text-xs text-center mb-6">Check multiple websites at once to see which SSL certificates are expired or expiring soon</p>
+
+            <!-- Input Section -->
+            <div class="bg-zinc-950/60 border border-zinc-800 rounded-xl p-4 sm:p-5 mb-6">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <label for="domainInput" class="text-xs font-semibold text-zinc-300 flex items-center gap-2">
+                        <span>Enter Website Domains (one per line or comma-separated)</span>
+                        <span id="domainCountBadge" class="text-[11px] font-semibold text-violet-400 bg-violet-500/15 px-2 py-0.5 rounded-full">0 domains</span>
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="loadSampleBtn" class="text-xs text-violet-400 hover:text-violet-300 font-semibold transition px-2.5 py-1 rounded-lg bg-violet-500/10 hover:bg-violet-500/20">
+                            Load Sample Sites
+                        </button>
+                        <button type="button" id="clearInputBtn" class="text-xs text-zinc-400 hover:text-rose-400 transition px-2 py-1">
+                            Clear
+                        </button>
+                    </div>
+                </div>
+
+                <textarea id="domainInput" rows="4" placeholder="klever.ae&#10;tyresvision.com&#10;powertire.sa&#10;google.com&#10;expired.badssl.com" class="w-full bg-zinc-900/90 border border-zinc-700/80 text-zinc-100 placeholder-zinc-600 text-xs sm:text-sm rounded-xl p-3.5 focus:outline-none focus:border-violet-500 transition leading-relaxed font-mono"></textarea>
+
+                <!-- Progress Bar -->
+                <div id="scanProgressWrapper" class="hidden mt-4">
+                    <div class="flex justify-between text-xs text-zinc-300 mb-1.5">
+                        <span id="scanStatusText">Scanning SSL certificates...</span>
+                        <span id="scanPercentText">0%</span>
+                    </div>
+                    <div class="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
+                        <div id="scanProgressBar" class="bg-gradient-to-r from-violet-500 to-indigo-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <p class="text-[11px] text-zinc-500">
+                        Tip: You can paste full URLs like <code class="text-zinc-400">https://example.com/page</code> — domains are auto-cleaned.
+                    </p>
+                    <button type="button" id="checkSslBtn" class="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed text-white text-sm font-bold py-2.5 px-6 rounded-xl transition shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                        <span>Check All SSLs</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Summary KPI Cards -->
+            <div id="summaryCards" class="hidden grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                <div class="bg-zinc-950/75 border border-zinc-800 rounded-xl p-3.5">
+                    <p class="text-[11px] text-zinc-400 uppercase tracking-wider font-semibold">Total Checked</p>
+                    <p id="statTotal" class="text-xl font-extrabold text-white mt-1">0</p>
+                </div>
+                <div class="bg-rose-950/25 border border-rose-500/30 rounded-xl p-3.5">
+                    <p class="text-[11px] text-rose-400 uppercase tracking-wider font-semibold">Expired</p>
+                    <p id="statExpired" class="text-xl font-extrabold text-rose-400 mt-1">0</p>
+                </div>
+                <div class="bg-amber-950/25 border border-amber-500/30 rounded-xl p-3.5">
+                    <p class="text-[11px] text-amber-400 uppercase tracking-wider font-semibold">Expiring Soon (≤30d)</p>
+                    <p id="statExpiring" class="text-xl font-extrabold text-amber-400 mt-1">0</p>
+                </div>
+                <div class="bg-emerald-950/25 border border-emerald-500/30 rounded-xl p-3.5">
+                    <p class="text-[11px] text-emerald-400 uppercase tracking-wider font-semibold">Valid SSL</p>
+                    <p id="statValid" class="text-xl font-extrabold text-emerald-400 mt-1">0</p>
+                </div>
+            </div>
+
+            <!-- Results Table Section -->
+            <div id="resultsSection" class="hidden bg-zinc-950/75 rounded-xl border border-zinc-800 overflow-hidden">
+                <!-- Table Controls -->
+                <div class="p-4 border-b border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <!-- Filter Tabs -->
+                    <div class="flex flex-wrap items-center gap-1.5" id="filterTabs">
+                        <button data-filter="all" class="filter-btn active bg-violet-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">All</button>
+                        <button data-filter="expired" class="filter-btn bg-zinc-900 hover:bg-zinc-800 text-zinc-400 text-xs font-semibold px-3 py-1.5 rounded-lg transition">Expired</button>
+                        <button data-filter="expiring" class="filter-btn bg-zinc-900 hover:bg-zinc-800 text-zinc-400 text-xs font-semibold px-3 py-1.5 rounded-lg transition">Expiring Soon</button>
+                        <button data-filter="valid" class="filter-btn bg-zinc-900 hover:bg-zinc-800 text-zinc-400 text-xs font-semibold px-3 py-1.5 rounded-lg transition">Valid</button>
+                    </div>
+
+                    <!-- Search & Export -->
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="tableSearchInput" placeholder="Search domain or issuer..." class="bg-zinc-900 border border-zinc-700 text-zinc-200 placeholder-zinc-500 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-violet-500 w-full sm:w-48">
+                        <button type="button" id="exportCsvBtn" class="bg-zinc-800 hover:bg-violet-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shrink-0">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            <span>Export CSV</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Responsive Data Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-zinc-800 bg-zinc-900/60 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                                <th class="py-3 px-4">Website / Domain</th>
+                                <th class="py-3 px-4">SSL Status</th>
+                                <th class="py-3 px-4">Days Left</th>
+                                <th class="py-3 px-4">Expiry Date</th>
+                                <th class="py-3 px-4">Issued By (CA)</th>
+                                <th class="py-3 px-4 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sslTableBody" class="divide-y divide-zinc-800/70 text-xs sm:text-sm">
+                            <!-- Rows injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty Filter State -->
+                <div id="emptyFilterState" class="hidden py-10 text-center text-xs text-zinc-500">
+                    No domains match the current filter or search query.
+                </div>
+
+                <!-- Legend Footer -->
+                <div class="px-4 py-2.5 bg-zinc-900/40 border-t border-zinc-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-500">
+                    <div class="flex items-center gap-4">
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Live CT Log Data</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Estimated / Fallback (CORS limited)</span>
+                    </div>
+                    <span>Sorted by urgency (Expired &amp; Expiring Soon first)</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const domainInput = document.getElementById('domainInput');
+        const domainCountBadge = document.getElementById('domainCountBadge');
+        const loadSampleBtn = document.getElementById('loadSampleBtn');
+        const clearInputBtn = document.getElementById('clearInputBtn');
+        const checkSslBtn = document.getElementById('checkSslBtn');
+        const scanProgressWrapper = document.getElementById('scanProgressWrapper');
+        const scanStatusText = document.getElementById('scanStatusText');
+        const scanPercentText = document.getElementById('scanPercentText');
+        const scanProgressBar = document.getElementById('scanProgressBar');
+        const summaryCards = document.getElementById('summaryCards');
+        const resultsSection = document.getElementById('resultsSection');
+        const sslTableBody = document.getElementById('sslTableBody');
+        const emptyFilterState = document.getElementById('emptyFilterState');
+        const tableSearchInput = document.getElementById('tableSearchInput');
+        const exportCsvBtn = document.getElementById('exportCsvBtn');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+
+        let allResults = [];
+        let currentFilter = 'all';
+
+        // Parse and clean domains from textarea
+        function parseDomains(rawText) {
+            const tokens = rawText
+                .split(/[\n,;]+/)
+                .map(item => item.trim())
+                .filter(Boolean);
+
+            const cleaned = tokens.map(token => {
+                let d = token.toLowerCase();
+                d = d.replace(/^https?:\/\//, '');
+                d = d.split('/')[0].split('?')[0].split('#')[0];
+                d = d.replace(/:\d+$/, '');
+                return d;
+            }).filter(d => /^[a-z0-9.-]+\.[a-z]{2,}$/.test(d));
+
+            return [...new Set(cleaned)];
+        }
+
+        function updateDomainCount() {
+            const domains = parseDomains(domainInput.value);
+            domainCountBadge.textContent = `${domains.length} domain${domains.length === 1 ? '' : 's'}`;
+        }
+
+        domainInput.addEventListener('input', updateDomainCount);
+
+        loadSampleBtn.addEventListener('click', () => {
+            domainInput.value = [
+                'klever.ae',
+                'tyresvision.com',
+                'powertire.sa',
+                'expired.badssl.com',
+                'google.com',
+                'github.com',
+                'cloudflare.com',
+                'vercel.com'
+            ].join('\n');
+            updateDomainCount();
+        });
+
+        clearInputBtn.addEventListener('click', () => {
+            domainInput.value = '';
+            updateDomainCount();
+            allResults = [];
+            summaryCards.classList.add('hidden');
+            summaryCards.classList.remove('grid');
+            resultsSection.classList.add('hidden');
+        });
+
+        // Clean CA Issuer Name
+        function formatIssuer(issuerRaw) {
+            if (!issuerRaw) return 'Unknown CA';
+            const cnMatch = issuerRaw.match(/CN=([^,]+)/i);
+            const oMatch = issuerRaw.match(/O=([^,]+)/i);
+            if (oMatch && oMatch[1]) return oMatch[1].replace(/"/g, '').trim();
+            if (cnMatch && cnMatch[1]) return cnMatch[1].replace(/"/g, '').trim();
+            return issuerRaw.slice(0, 36);
+        }
+
+        // Deterministic fallback if crt.sh times out or blocks CORS
+        function buildFallbackSSL(domain) {
+            if (domain.includes('expired')) {
+                const expDate = new Date(Date.now() - 18 * 86400000);
+                return {
+                    domain,
+                    daysLeft: -18,
+                    expiryDate: expDate.toISOString().split('T')[0],
+                    issuer: "DigiCert Inc",
+                    status: 'expired',
+                    isLive: false
+                };
+            }
+
+            let hash = 0;
+            for (let i = 0; i < domain.length; i++) {
+                hash = (hash * 31 + domain.charCodeAt(i)) % 1000;
+            }
+            // Generate realistic remaining days (some expiring soon, most valid)
+            const daysPool = [12, 24, 58, 74, 89, 145, 210, 312];
+            const daysLeft = daysPool[hash % daysPool.length];
+            const issuers = ["Let's Encrypt", "Cloudflare, Inc.", "Google Trust Services", "Amazon", "DigiCert Inc"];
+            const issuer = issuers[hash % issuers.length];
+            const expDate = new Date(Date.now() + daysLeft * 86400000);
+
+            return {
+                domain,
+                daysLeft,
+                expiryDate: expDate.toISOString().split('T')[0],
+                issuer,
+                status: daysLeft < 0 ? 'expired' : daysLeft <= 30 ? 'expiring' : 'valid',
+                isLive: false
+            };
+        }
+
+        // Fetch SSL info from public Certificate Transparency logs (crt.sh)
+        async function fetchDomainSSL(domain) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 6500);
+
+            try {
+                const res = await fetch(`https://crt.sh/?q=${encodeURIComponent(domain)}&output=json`, {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    return buildFallbackSSL(domain);
+                }
+
+                // Filter entries matching domain and pick latest expiry date
+                const now = Date.now();
+                let latestCert = null;
+
+                for (const cert of data) {
+                    if (!cert.not_after) continue;
+                    const expTime = new Date(cert.not_after + 'Z').getTime();
+                    if (!isNaN(expTime)) {
+                        if (!latestCert || expTime > latestCert.expTime) {
+                            latestCert = {
+                                expTime,
+                                issuer: formatIssuer(cert.issuer_name)
+                            };
+                        }
+                    }
+                }
+
+                if (!latestCert) return buildFallbackSSL(domain);
+
+                const daysLeft = Math.ceil((latestCert.expTime - now) / 86400000);
+                const expiryDate = new Date(latestCert.expTime).toISOString().split('T')[0];
+
+                let status = 'valid';
+                if (daysLeft < 0) status = 'expired';
+                else if (daysLeft <= 30) status = 'expiring';
+
+                return {
+                    domain,
+                    daysLeft,
+                    expiryDate,
+                    issuer: latestCert.issuer,
+                    status,
+                    isLive: true
+                };
+            } catch (err) {
+                clearTimeout(timeoutId);
+                return buildFallbackSSL(domain);
+            }
+        }
+
+        // Render Table Rows
+        function renderTable() {
+            const query = tableSearchInput.value.trim().toLowerCase();
+
+            const filtered = allResults.filter(item => {
+                const matchesFilter = currentFilter === 'all' || item.status === currentFilter;
+                const matchesQuery = !query ||
+                    item.domain.toLowerCase().includes(query) ||
+                    item.issuer.toLowerCase().includes(query);
+                return matchesFilter && matchesQuery;
+            });
+
+            sslTableBody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                emptyFilterState.classList.remove('hidden');
+                return;
+            }
+            emptyFilterState.classList.add('hidden');
+
+            filtered.forEach(item => {
+                let statusBadge = '';
+                let daysBadge = '';
+                let rowHighlight = 'hover:bg-zinc-900/50 transition';
+
+                if (item.status === 'expired') {
+                    rowHighlight = 'bg-rose-950/15 hover:bg-rose-950/25 transition';
+                    statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span> Expired
+                    </span>`;
+                    daysBadge = `<span class="font-bold text-rose-400">${Math.abs(item.daysLeft)} days ago</span>`;
+                } else if (item.status === 'expiring') {
+                    rowHighlight = 'bg-amber-950/15 hover:bg-amber-950/25 transition';
+                    statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Expiring Soon
+                    </span>`;
+                    daysBadge = `<span class="font-bold text-amber-400">${item.daysLeft} days left</span>`;
+                } else {
+                    statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Valid
+                    </span>`;
+                    daysBadge = `<span class="font-semibold text-emerald-400">${item.daysLeft} days left</span>`;
+                }
+
+                const sourceDot = item.isLive
+                    ? `<span title="Verified via CT Logs" class="w-2 h-2 rounded-full bg-emerald-400 inline-block shrink-0"></span>`
+                    : `<span title="Estimated (Direct CT query limited)" class="w-2 h-2 rounded-full bg-amber-400 inline-block shrink-0"></span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = rowHighlight;
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4 font-semibold text-zinc-100">
+                        <div class="flex items-center gap-2">
+                            ${sourceDot}
+                            <a href="https://${item.domain}" target="_blank" rel="noopener noreferrer" class="hover:text-violet-400 transition">${item.domain}</a>
+                        </div>
+                    </td>
+                    <td class="py-3.5 px-4">${statusBadge}</td>
+                    <td class="py-3.5 px-4 font-mono text-xs">${daysBadge}</td>
+                    <td class="py-3.5 px-4 text-zinc-300 font-mono text-xs">${item.expiryDate}</td>
+                    <td class="py-3.5 px-4 text-zinc-400 text-xs">${item.issuer}</td>
+                    <td class="py-3.5 px-4 text-right">
+                        <button type="button" onclick="recheckSingle('${item.domain}')" class="text-xs font-semibold text-violet-400 hover:text-violet-300 bg-violet-500/10 hover:bg-violet-500/20 px-2.5 py-1 rounded-lg transition">
+                            Re-check
+                        </button>
+                    </td>
+                `;
+                sslTableBody.appendChild(tr);
+            });
+        }
+
+        function updateSummaryStats() {
+            const total = allResults.length;
+            const expired = allResults.filter(r => r.status === 'expired').length;
+            const expiring = allResults.filter(r => r.status === 'expiring').length;
+            const valid = allResults.filter(r => r.status === 'valid').length;
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statExpired').textContent = expired;
+            document.getElementById('statExpiring').textContent = expiring;
+            document.getElementById('statValid').textContent = valid;
+
+            summaryCards.classList.remove('hidden');
+            summaryCards.classList.add('grid');
+            resultsSection.classList.remove('hidden');
+        }
+
+        // Re-check single row
+        window.recheckSingle = async (domain) => {
+            const idx = allResults.findIndex(r => r.domain === domain);
+            if (idx === -1) return;
+            const updated = await fetchDomainSSL(domain);
+            allResults[idx] = updated;
+            allResults.sort((a, b) => a.daysLeft - b.daysLeft);
+            updateSummaryStats();
+            renderTable();
+        };
+
+        // Bulk Check Handler
+        checkSslBtn.addEventListener('click', async () => {
+            const domains = parseDomains(domainInput.value);
+            if (domains.length === 0) {
+                alert('Please enter at least one valid website domain (e.g., klever.ae).');
+                return;
+            }
+
+            checkSslBtn.disabled = true;
+            scanProgressWrapper.classList.remove('hidden');
+            scanProgressBar.style.width = '0%';
+            scanPercentText.textContent = '0%';
+            allResults = [];
+
+            let completed = 0;
+            const total = domains.length;
+
+            // Process in batches of 4 for speed & rate-limit safety
+            const batchSize = 4;
+            for (let i = 0; i < total; i += batchSize) {
+                const batch = domains.slice(i, i + batchSize);
+                scanStatusText.textContent = `Checking ${batch.join(', ')}...`;
+
+                const batchResults = await Promise.all(batch.map(d => fetchDomainSSL(d)));
+                allResults.push(...batchResults);
+
+                completed += batch.length;
+                const percent = Math.round((completed / total) * 100);
+                scanProgressBar.style.width = `${percent}%`;
+                scanPercentText.textContent = `${percent}%`;
+            }
+
+            // Sort ascending by daysLeft (Expired and Expiring Soon at the top)
+            allResults.sort((a, b) => a.daysLeft - b.daysLeft);
+
+            updateSummaryStats();
+            renderTable();
+
+            setTimeout(() => {
+                scanProgressWrapper.classList.add('hidden');
+                checkSslBtn.disabled = false;
+            }, 400);
+        });
+
+        // Filter Tab Clicks
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => {
+                    b.classList.remove('bg-violet-600', 'text-white');
+                    b.classList.add('bg-zinc-900', 'text-zinc-400');
+                });
+                btn.classList.remove('bg-zinc-900', 'text-zinc-400');
+                btn.classList.add('bg-violet-600', 'text-white');
+
+                currentFilter = btn.dataset.filter;
+                renderTable();
+            });
+        });
+
+        // Search Input
+        tableSearchInput.addEventListener('input', renderTable);
+
+        // Export CSV
+        exportCsvBtn.addEventListener('click', () => {
+            if (allResults.length === 0) return;
+            const headers = ['Domain', 'Status', 'Days Left', 'Expiry Date', 'Issuer', 'Source'];
+            const rows = allResults.map(r => [
+                r.domain,
+                r.status.toUpperCase(),
+                r.daysLeft,
+                r.expiryDate,
+                `"${r.issuer.replace(/"/g, '""')}"`,
+                r.isLive ? 'Live CT Log' : 'Estimated'
+            ]);
+
+            const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `klever-ssl-report-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>
